@@ -1,0 +1,26 @@
+Escalonamento: FCFS
+
+Process PID: 0
+   número de threads: 2
+       thread: 0
+       thread: 1
+   tamanho do processo: 1000
+   tempo restante: 1000
+   prioridade: 3
+   estado: READY
+
+Process PID: 1
+   número de threads: 1
+       thread: 0
+   tamanho do processo: 2000
+   tempo restante: 2000
+   prioridade: 1
+   estado: READY
+
+Process PID: 2
+   número de threads: 1
+       thread: 0
+   tamanho do processo: 1500
+   tempo restante: 1500
+   prioridade: 2
+   estado: READY
