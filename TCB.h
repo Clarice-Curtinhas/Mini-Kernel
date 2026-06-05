@@ -1,11 +1,10 @@
 #ifndef TCB_H
 #define TCB_H
 
-#include <pthreads.h>
+#include <pthread.h>
+#include "PCB.h"
 
-typedef struct Tcb tTcb;
-
-tTcb* criaThread(PCB *processo);
+typedef struct tTCB TCB;
 
 void *thr_func(void *arg);
 

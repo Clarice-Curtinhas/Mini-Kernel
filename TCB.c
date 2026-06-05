@@ -1,20 +1,37 @@
+#include <unistd.h>
 #include "TCB.h"
 
-typedef struct Tcb {
-   PCB* processo;
-   int thread_index;
-} tTcb;
+#define READY 'p'
+#define RUNNING 'r'
+#define FINISHED 'f'
 
-tTcb* criaThread(PCB *processo){
-
-   tTcb *thread = malloc(sizeof(Tcb));
-
-   thread->processo = processo;
-   pthread_create(&thread->thread_index, NULL, thr_func, NULL);
-
-   return thread;
-}
+typedef struct tTCB {
+    PCB* processo;
+    int thread_index;
+} TCB;
 
 void *thr_func(void *arg){
+   
+    PCB *p = (PCB*)arg;
+    int tempo = 500;
+
+    pthread_mutex_t mutex = getMutex(p);
     
+    pthread_mutex_lock(&mutex);
+   
+    while(getState(p) != RUNNING){
+
+        //printf("Bloqueado!\n");
+
+        pthread_cond_t cond = getCondicional(p);
+        pthread_cond_wait(&cond, &mutex);
+    }
+
+    printf("Desbloqueado!\n");
+
+    usleep(500000);
+    diminuiRemainingTime(p, tempo);
+
+    pthread_mutex_unlock(&mutex);
 }
+ 

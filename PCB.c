@@ -4,8 +4,6 @@
 #define RUNNING 'r'
 #define FINISHED 'f'
 
-typedef char ProcessState;
-
 typedef struct tPCB {
 
     int pid; 
@@ -14,24 +12,11 @@ typedef struct tPCB {
     int priority; 
     int num_threads; 
     int start_time; 
-
     ProcessState state; 
-    
     pthread_mutex_t mutex; 
     pthread_cond_t cv; 
     pthread_t *thread_ids; 
 } PCB;
-
-/*
-double quantum;  //Quantum usado no Round Robin (ms) 
-char *log_buffer;  //Armazena  mensagens  de  log  durante  a execução
-
-PCB *pcb_list; //Lista de todos os processos do sistema
-runqueue; //Fila de prontos circular 
-bool generator_done; //Sinaliza que todos os processos foram criados e enfileirados 
-Process *current_process; //Processo atualmente em execução 
-int scheduler_type; //Define política de escalonamento 
-*/
 
 PCB* criaProcesso(int duracao, int prioridade, int n_threads, int tempo_chegada, int pid){
 
@@ -43,30 +28,44 @@ PCB* criaProcesso(int duracao, int prioridade, int n_threads, int tempo_chegada,
     processo->priority = prioridade;
     processo->num_threads = n_threads;
     processo->start_time = tempo_chegada;
-    processo->state = READY;
-    processo->thread_ids = NULL;
+    processo->state = READY;  ///LEMBRAR DE ALTERAR PARA TESTES
+
+    pthread_mutex_init(&processo->mutex, NULL);
+    pthread_cond_init(&processo->cv, NULL);
+    
+    processo->thread_ids = malloc(processo->num_threads * sizeof(pthread_t));
+
+    for(int i = 0; i < processo->num_threads; i++){
+        pthread_create(&processo->thread_ids[i], NULL, thr_func, processo);
+    }
 
     return processo;
 }
 
-int getPid(PCB *processo){
-
-    return processo->pid;
+ProcessState getState(PCB *processo){
+    return processo->state;
 }
 
-void executaProcesso(PCB *processo){
-    
-    for(int i = 0; i < processo->n_threads; i++){
+pthread_mutex_t getMutex(PCB *processo){
+    return processo->mutex;
+}
 
-        tTcb *thread = criaThread(processo);
-        
-        if(){
-            break;
-        }
+pthread_cond_t getCondicional(PCB *processo){
+    return processo->cv;
+}
+
+void diminuiRemainingTime(PCB *processo, int valor){
+
+    processo->remaining_time -= valor;
+
+    if(processo->remaining_time <= 0){
+        processo->remaining_time = 0;
+        processo->state = FINISHED;
     }
 }
 
 void imprimeProcesso(FILE *fp, PCB *processo){
+    
     fprintf(fp, "\nProcess PID: %d\n", processo->pid);
 
     fprintf(fp, "   número de threads: %d\n", processo->num_threads);
@@ -86,6 +85,16 @@ void imprimeProcesso(FILE *fp, PCB *processo){
 }
 
 void desalocaProcesso(PCB *processo){
+
+    pthread_mutex_destroy(&processo->mutex);
+    pthread_cond_destroy(&processo->cv);
+    
+    for(int i = 0; i < processo->num_threads; i++){
+        if(pthread_join(processo->thread_ids[i], NULL) != 0){
+            printf("ERRO: Pthread join falhou!\n");
+        }
+    }
+    
     free(processo->thread_ids);
     free(processo);
 }

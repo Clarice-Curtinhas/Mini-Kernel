@@ -3,11 +3,8 @@
 #include <string.h>
 #include <pthread.h>
 
+#include "escalonador.h"
 #include "PCB.h"
-
-#define FCFS 1
-#define RR 2
-#define PP 3
 
 int main(int argc, char *argv[]){
 
@@ -17,13 +14,15 @@ int main(int argc, char *argv[]){
     }
 
     FILE *entrada = fopen(argv[1], "r");
+
+    Escalonador *escalonador;
     
     int n_processos = 0, n_threads = 0, prioridade, escalonamento;
     int duracao_processo = 0, tempo_chegada = 0;
 
     fscanf(entrada, "%d", &n_processos);
 
-    PCB *processo[n_processos];
+    escalonador = criaEscalonador(n_processos);
 
     for(int i = 0; i < n_processos; i++){
 
@@ -32,33 +31,21 @@ int main(int argc, char *argv[]){
         fscanf(entrada, "%d", &n_threads);
         fscanf(entrada, "%d", &tempo_chegada);
         
-        processo[i] = criaProcesso(duracao_processo, prioridade, n_threads, tempo_chegada, i);
+        PCB* p = criaProcesso(duracao_processo, prioridade, n_threads, tempo_chegada, i);
+        adicionaProcesso(escalonador, p);
     }
 
     fscanf(entrada, "%d", &escalonamento);
 
+    setPolitica(escalonador, escalonamento);
+
     fclose(entrada);
 
-    ///
-
     FILE *saida = fopen("log_execucao_minikernel.txt", "w");
-    
-    if(escalonamento == FCFS){
-        fprintf(saida, "Escalonamento: FCFS\n");
-    }
 
-    if(escalonamento == RR){
-        fprintf(saida, "Escalonamento: RR\n");
-    }
+    imprimeFila(saida, getFila(escalonador));
 
-    if(escalonamento == PP){
-        fprintf(saida, "Escalonamento: PP\n");
-    }
-
-    for(int i = 0; i < n_processos; i++){
-        imprimeProcesso(saida, processo[i]);
-        desalocaProcesso(processo[i]);
-    }
+    liberaEscalonador(escalonador);
 
     fclose(saida);
 
