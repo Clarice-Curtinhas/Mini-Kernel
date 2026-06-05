@@ -20,6 +20,8 @@ int main(int argc, char *argv[]){
     int n_processos = 0, n_threads = 0, prioridade, escalonamento;
     int duracao_processo = 0, tempo_chegada = 0;
 
+    pthread_t thread_esc;
+
     fscanf(entrada, "%d", &n_processos);
 
     escalonador = criaEscalonador(n_processos);
@@ -41,9 +43,12 @@ int main(int argc, char *argv[]){
 
     fclose(entrada);
 
+    pthread_create(&thread_esc, NULL, executaEscalonamento, escalonador);
+    pthread_join(thread_esc, NULL);
+
     FILE *saida = fopen("log_execucao_minikernel.txt", "w");
 
-    imprimeFila(saida, getFila(escalonador));
+    imprimeBuffer(escalonador, saida);
 
     liberaEscalonador(escalonador);
 

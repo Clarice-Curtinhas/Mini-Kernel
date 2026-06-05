@@ -30,6 +30,14 @@ void adicionaProcessoFila(Fila *fila, PCB *p){
     fila->tam++;
 }
 
+int filaVazia(Fila *fila){
+
+    if(fila->tam == 0){
+        return 1;
+    }
+    return 0;
+}
+
 PCB *retiraProcesso(Fila *fila){
 
     if(fila->tam == 0){
@@ -37,7 +45,8 @@ PCB *retiraProcesso(Fila *fila){
     }
 
     PCB *p = fila->fila[fila->inicial];
-    fila->inicial = fila->inicial++;
+    fila->inicial++;
+    
     fila->inicial = fila->inicial % fila->cap;
     fila->tam--;
 

@@ -13,25 +13,27 @@ typedef struct tTCB {
 void *thr_func(void *arg){
    
     PCB *p = (PCB*)arg;
-    int tempo = 500;
+    int tempo = getDuracao(p)/getNumThreads(p);
 
-    pthread_mutex_t mutex = getMutex(p);
+    pthread_mutex_t *mutex = getMutex(p);
     
-    pthread_mutex_lock(&mutex);
+    pthread_mutex_lock(mutex);
    
     while(getState(p) != RUNNING){
 
-        //printf("Bloqueado!\n");
+        printf("Bloqueado!\n");
 
-        pthread_cond_t cond = getCondicional(p);
-        pthread_cond_wait(&cond, &mutex);
+        pthread_cond_t *cond = getCondicional(p);
+        pthread_cond_wait(cond, mutex);
     }
 
-    printf("Desbloqueado!\n");
+    printf("Desbloqueado! Processo %d\n",getPid(p));
 
-    usleep(500000);
+    usleep(tempo*1000);
     diminuiRemainingTime(p, tempo);
 
-    pthread_mutex_unlock(&mutex);
+    pthread_mutex_unlock(mutex);
+
+    return NULL;
 }
  

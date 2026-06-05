@@ -1,9 +1,5 @@
 #include "PCB.h"
 
-#define READY 'p'
-#define RUNNING 'r'
-#define FINISHED 'f'
-
 typedef struct tPCB {
 
     int pid; 
@@ -46,12 +42,28 @@ ProcessState getState(PCB *processo){
     return processo->state;
 }
 
-pthread_mutex_t getMutex(PCB *processo){
-    return processo->mutex;
+void setState(PCB *processo, ProcessState novoEstado){
+    processo->state = novoEstado;
 }
 
-pthread_cond_t getCondicional(PCB *processo){
-    return processo->cv;
+pthread_mutex_t* getMutex(PCB *processo){
+    return &processo->mutex;
+}
+
+int getDuracao(PCB *processo){
+    return processo->process_len;
+}
+
+int getNumThreads(PCB *processo){
+    return processo->num_threads;
+}
+
+pthread_cond_t* getCondicional(PCB *processo){
+    return &processo->cv;
+}
+
+int getPid(PCB *processo){
+    return processo->pid;
 }
 
 void diminuiRemainingTime(PCB *processo, int valor){
@@ -59,8 +71,12 @@ void diminuiRemainingTime(PCB *processo, int valor){
     processo->remaining_time -= valor;
 
     if(processo->remaining_time <= 0){
+        pthread_cond_t *cond = getCondicional(processo);
+
         processo->remaining_time = 0;
         processo->state = FINISHED;
+
+        pthread_cond_broadcast(cond);
     }
 }
 

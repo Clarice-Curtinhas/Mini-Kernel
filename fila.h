@@ -12,6 +12,8 @@ void adicionaProcessoFila(Fila *fila, PCB *p);
 
 PCB *retiraProcesso(Fila *fila);
 
+int filaVazia(Fila *fila);
+
 void desalocaFilaProcessos(Fila *fila);
 
 void desalocaFilaProntos(Fila *fila);
