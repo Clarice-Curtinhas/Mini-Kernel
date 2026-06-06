@@ -25,6 +25,12 @@ int getDuracao(PCB *processo);
 
 int getNumThreads(PCB *processo);
 
+int getTempoChegada(PCB *processo);
+
+int getPrioridade(PCB *processo);
+
+int comparaProcessos(const void *a, const void *b);
+
 pthread_mutex_t* getMutex(PCB *processo);
 
 pthread_cond_t* getCondicional(PCB *processo);

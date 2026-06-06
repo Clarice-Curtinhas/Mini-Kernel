@@ -21,13 +21,13 @@ void *thr_func(void *arg){
    
     while(getState(p) != RUNNING){
 
-        printf("Bloqueado!\n");
+        //printf("Bloqueado!\n");
 
         pthread_cond_t *cond = getCondicional(p);
         pthread_cond_wait(cond, mutex);
     }
 
-    printf("Desbloqueado! Processo %d\n",getPid(p));
+    //printf("Desbloqueado! Processo %d\n",getPid(p));
 
     usleep(tempo*1000);
     diminuiRemainingTime(p, tempo);

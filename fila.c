@@ -20,14 +20,43 @@ Fila *criaFila(int num_processos){
     return f;
 }
 
-void adicionaProcessoFila(Fila *fila, PCB *p){
+PCB** getVetor(Fila *fila){
+    return fila->fila;
+}
+
+int getTam(Fila *fila){
+    return fila->tam;
+}
+
+int adicionaProcessoFila(Fila *fila, PCB *p){
+
+    if(verificaSeExiste(fila, p) == 1) return 0;
     
-    if(fila->tam == fila->cap) return;
+    if(fila->tam == fila->cap) return 0;
 
     fila->fila[fila->final] = p;
     fila->final++;
     fila->final = fila->final % fila->cap;
     fila->tam++;
+
+    //printf("Tempo de chegada do processo: %d\n", getTempoChegada(p));
+    //printf("Processo de PID %d adicionado na fila de prontos\n", getPid(p));
+
+    return 1;
+}
+
+int verificaSeExiste(Fila *fila, PCB *p){
+    
+    int i = fila->inicial;
+
+    for(int count = 0; count < fila->tam; count++){
+
+        if(fila->fila[i] == p) return 1;
+
+        i++;
+    }
+
+    return 0;
 }
 
 int filaVazia(Fila *fila){
@@ -51,6 +80,12 @@ PCB *retiraProcesso(Fila *fila){
     fila->tam--;
 
     return p;
+}
+
+PCB* getProcesso(Fila *fila, int i){
+    
+    i = i%fila->cap;
+    return fila->fila[i];
 }
 
 void desalocaFilaProcessos(Fila *fila){

@@ -33,7 +33,7 @@ int main(int argc, char *argv[]){
         fscanf(entrada, "%d", &n_threads);
         fscanf(entrada, "%d", &tempo_chegada);
         
-        PCB* p = criaProcesso(duracao_processo, prioridade, n_threads, tempo_chegada, i);
+        PCB* p = criaProcesso(duracao_processo, prioridade, n_threads, tempo_chegada, i + 1);
         adicionaProcesso(escalonador, p);
     }
 

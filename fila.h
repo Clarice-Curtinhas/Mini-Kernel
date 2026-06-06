@@ -8,11 +8,19 @@ typedef struct tFila Fila;
 
 Fila *criaFila(int num_processos);
 
-void adicionaProcessoFila(Fila *fila, PCB *p);
+int adicionaProcessoFila(Fila *fila, PCB *p);
 
 PCB *retiraProcesso(Fila *fila);
 
 int filaVazia(Fila *fila);
+
+int verificaSeExiste(Fila *fila, PCB *p);
+
+PCB** getVetor(Fila *fila);
+
+int getTam(Fila *fila);
+
+PCB* getProcesso(Fila *fila, int i);
 
 void desalocaFilaProcessos(Fila *fila);
 

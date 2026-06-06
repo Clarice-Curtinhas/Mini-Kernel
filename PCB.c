@@ -1,7 +1,6 @@
 #include "PCB.h"
 
 typedef struct tPCB {
-
     int pid; 
     int process_len; 
     int remaining_time; 
@@ -13,6 +12,14 @@ typedef struct tPCB {
     pthread_cond_t cv; 
     pthread_t *thread_ids; 
 } PCB;
+
+int comparaProcessos(const void *a, const void *b){
+
+    PCB *p1 = *(PCB**) a;
+    PCB *p2 = *(PCB**) b;
+
+    return getTempoChegada(p1) - getTempoChegada(p2);
+}
 
 PCB* criaProcesso(int duracao, int prioridade, int n_threads, int tempo_chegada, int pid){
 
@@ -54,8 +61,16 @@ int getDuracao(PCB *processo){
     return processo->process_len;
 }
 
+int getTempoChegada(PCB *processo){
+    return processo->start_time;
+}
+
 int getNumThreads(PCB *processo){
     return processo->num_threads;
+}
+
+int getPrioridade(PCB *processo){
+    return processo->priority;
 }
 
 pthread_cond_t* getCondicional(PCB *processo){
@@ -71,6 +86,7 @@ void diminuiRemainingTime(PCB *processo, int valor){
     processo->remaining_time -= valor;
 
     if(processo->remaining_time <= 0){
+
         pthread_cond_t *cond = getCondicional(processo);
 
         processo->remaining_time = 0;
