@@ -49,6 +49,10 @@ ProcessState getState(PCB *processo){
     return processo->state;
 }
 
+int getRemainingTime(PCB *processo){
+    return processo->remaining_time;
+}
+
 void setState(PCB *processo, ProcessState novoEstado){
     processo->state = novoEstado;
 }

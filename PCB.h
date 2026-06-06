@@ -23,6 +23,8 @@ int getPid(PCB *processo);
 
 int getDuracao(PCB *processo);
 
+int getRemainingTime(PCB *processo);
+
 int getNumThreads(PCB *processo);
 
 int getTempoChegada(PCB *processo);
