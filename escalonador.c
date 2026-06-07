@@ -126,6 +126,7 @@ void escalonamentoFCFS(Escalonador *e){
             pthread_mutex_lock(&e->scheduler_mutex);
             
             PCB *p = retiraProcesso(e->fila_prontos);
+            setTipoEscalonamento(p, 1);
 
             if(p == NULL){
 
@@ -166,58 +167,57 @@ void escalonamentoFCFS(Escalonador *e){
 
 void escalonamentoRR(Escalonador *e){
     
-    //int time = 0;
-
     while(filaVazia(e->fila_prontos) == 0 || e->generator_done == FALSE){
 
         if(e->generator_done == FALSE) verificaProcessosValidos(e);
-        
-        //if(e->current_process == NULL || time != 500){
-            
-            pthread_mutex_lock(&e->scheduler_mutex);
-            
-            PCB *p = retiraProcesso(e->fila_prontos);
-
-            if(p == NULL){
-
-                while(1){
                     
-                    p = retiraProcesso(e->fila_prontos);
-                    if(p != NULL) break;
-                    pthread_cond_wait(&e->scheduler_cv, &e->scheduler_mutex);
-                }
-            }
-
-            pthread_mutex_unlock(&e->scheduler_mutex);
-        
-            e->tempo_atual += getDuracao(p);
-
-            e->current_process = p;
-            int falta = getRemainingTime(p) - e->quantum;
-
-            pthread_mutex_t *mutex = getMutex(p);
-            pthread_cond_t *cond = getCondicional(p);
-
-            pthread_mutex_lock(mutex);
-            setState(p, RUNNING);
-            pthread_cond_broadcast(cond);
-
-            while(getRemainingTime(p) > falta){
-                pthread_cond_wait(cond, mutex);
-            }
-
-            if(getRemainingTime(p) > 0){
-                setState(p, READY);
-                adicionaProcessoFila(e->fila_prontos, p);
-            }
+        pthread_mutex_lock(&e->scheduler_mutex);
             
-            pthread_mutex_unlock(mutex);
+        PCB *p = retiraProcesso(e->fila_prontos);
+        setTipoEscalonamento(p, 2);
 
-            executaPcbBuffer(e);
-        //}
+        if(p == NULL){
+
+            while(1){
+                    
+                p = retiraProcesso(e->fila_prontos);
+                if(p != NULL) break;
+                pthread_cond_wait(&e->scheduler_cv, &e->scheduler_mutex);
+            }
+        }
+
+        pthread_mutex_unlock(&e->scheduler_mutex);
+        
+        e->tempo_atual += getDuracao(p);
+
+        e->current_process = p;
+        int falta = getRemainingTime(p) - e->quantum;
+
+        pthread_mutex_t *mutex = getMutex(p);
+        pthread_cond_t *cond = getCondicional(p);
+
+        pthread_mutex_lock(mutex);
+        setState(p, RUNNING);
+        pthread_cond_broadcast(cond);
+
+        while(getRemainingTime(p) > falta){
+            pthread_cond_wait(cond, mutex);
+        }
+
+        if(getRemainingTime(p) > 0){
+            setState(p, READY);
+            adicionaProcessoFila(e->fila_prontos, p);
+        }
+            
+        pthread_mutex_unlock(mutex);
+
+        executaPcbBuffer(e);
+
+        if(getRemainingTime(p) <= 0){
+            finalizaPcbBuffer(e);
+        }
     }
 
-    finalizaPcbBuffer(e);
     terminaExecucaoBuffer(e);
 }
 

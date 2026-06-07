@@ -31,6 +31,10 @@ int getTempoChegada(PCB *processo);
 
 int getPrioridade(PCB *processo);
 
+int getTipoEscalonamento(PCB *processo);
+
+void setTipoEscalonamento(PCB *processo, int tipo);
+
 int comparaProcessos(const void *a, const void *b);
 
 pthread_mutex_t* getMutex(PCB *processo);

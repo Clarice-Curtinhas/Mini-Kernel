@@ -1,5 +1,9 @@
 #include "PCB.h"
 
+#define FCFS 1
+#define RR 2
+#define PP 3
+
 typedef struct tPCB {
     int pid; 
     int process_len; 
@@ -7,6 +11,7 @@ typedef struct tPCB {
     int priority; 
     int num_threads; 
     int start_time; 
+    int tipo_escalonamento;
     ProcessState state; 
     pthread_mutex_t mutex; 
     pthread_cond_t cv; 
@@ -32,6 +37,7 @@ PCB* criaProcesso(int duracao, int prioridade, int n_threads, int tempo_chegada,
     processo->num_threads = n_threads;
     processo->start_time = tempo_chegada;
     processo->state = READY;  ///LEMBRAR DE ALTERAR PARA TESTES
+    processo->tipo_escalonamento = 0;
 
     pthread_mutex_init(&processo->mutex, NULL);
     pthread_cond_init(&processo->cv, NULL);
@@ -85,19 +91,25 @@ int getPid(PCB *processo){
     return processo->pid;
 }
 
+int getTipoEscalonamento(PCB *processo){
+    return processo->tipo_escalonamento;
+}
+
+void setTipoEscalonamento(PCB *processo, int tipo){
+    processo->tipo_escalonamento = tipo;
+}
+
 void diminuiRemainingTime(PCB *processo, int valor){
 
     processo->remaining_time -= valor;
 
     if(processo->remaining_time <= 0){
-
-        pthread_cond_t *cond = getCondicional(processo);
-
         processo->remaining_time = 0;
         processo->state = FINISHED;
-
-        pthread_cond_broadcast(cond);
     }
+
+    pthread_cond_t *cond = getCondicional(processo);
+    pthread_cond_broadcast(cond);
 }
 
 void imprimeProcesso(FILE *fp, PCB *processo){

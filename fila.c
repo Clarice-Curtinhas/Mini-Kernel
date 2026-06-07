@@ -39,9 +39,6 @@ int adicionaProcessoFila(Fila *fila, PCB *p){
     fila->final = fila->final % fila->cap;
     fila->tam++;
 
-    //printf("Tempo de chegada do processo: %d\n", getTempoChegada(p));
-    //printf("Processo de PID %d adicionado na fila de prontos\n", getPid(p));
-
     return 1;
 }
 

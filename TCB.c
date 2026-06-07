@@ -15,24 +15,33 @@ void *thr_func(void *arg){
     PCB *p = (PCB*)arg;
     int tempo = getDuracao(p)/getNumThreads(p);
 
-    pthread_mutex_t *mutex = getMutex(p);
+    while(getState(p) != FINISHED){
+
+        pthread_mutex_t *mutex = getMutex(p);
     
-    pthread_mutex_lock(mutex);
+        pthread_mutex_lock(mutex);
    
-    while(getState(p) != RUNNING){
+        while(getState(p) != RUNNING){
 
-        //printf("Bloqueado!\n");
+            pthread_cond_t *cond = getCondicional(p);
+            pthread_cond_wait(cond, mutex);
+        }
 
-        pthread_cond_t *cond = getCondicional(p);
-        pthread_cond_wait(cond, mutex);
+        pthread_mutex_unlock(mutex);
+
+        if(getTipoEscalonamento(p) == 2 && tempo > 500){
+            usleep(500 * 1000);
+            pthread_mutex_lock(mutex);
+            diminuiRemainingTime(p, 500);
+            pthread_mutex_unlock(mutex);
+        }
+        else{
+            usleep(tempo * 1000);
+            pthread_mutex_lock(mutex);
+            diminuiRemainingTime(p, tempo);
+            pthread_mutex_unlock(mutex);
+        }
     }
-
-    //printf("Desbloqueado! Processo %d\n",getPid(p));
-
-    usleep(tempo*1000);
-    diminuiRemainingTime(p, tempo);
-
-    pthread_mutex_unlock(mutex);
 
     return NULL;
 }
