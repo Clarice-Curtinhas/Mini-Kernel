@@ -15,12 +15,12 @@ void *thr_func(void *arg){
     PCB *p = (PCB*)arg;
     int tempo = getDuracao(p)/getNumThreads(p);
 
-    while(getState(p) != FINISHED){
-
-        pthread_mutex_t *mutex = getMutex(p);
+    pthread_mutex_t *mutex = getMutex(p);
     
+    while(getState(p) != FINISHED){
+        
         pthread_mutex_lock(mutex);
-   
+        
         while(getState(p) != RUNNING){
 
             pthread_cond_t *cond = getCondicional(p);
@@ -32,6 +32,7 @@ void *thr_func(void *arg){
         if(getTipoEscalonamento(p) == 2 && tempo > 500){
             usleep(500 * 1000);
             pthread_mutex_lock(mutex);
+            setState(p, READY);
             diminuiRemainingTime(p, 500);
             pthread_mutex_unlock(mutex);
         }
@@ -42,7 +43,5 @@ void *thr_func(void *arg){
             pthread_mutex_unlock(mutex);
         }
     }
-
-    return NULL;
 }
  

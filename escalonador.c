@@ -198,22 +198,23 @@ void escalonamentoRR(Escalonador *e){
 
         pthread_mutex_lock(mutex);
         setState(p, RUNNING);
+        printf("Processo %d running, Remaining time: %d\n", getPid(p), getRemainingTime(p));
         pthread_cond_broadcast(cond);
 
         while(getRemainingTime(p) > falta){
             pthread_cond_wait(cond, mutex);
         }
-
-        if(getRemainingTime(p) > 0){
-            setState(p, READY);
-            adicionaProcessoFila(e->fila_prontos, p);
-        }
             
         pthread_mutex_unlock(mutex);
+
+        if(getRemainingTime(p) > 0){
+            adicionaProcessoFila(e->fila_prontos, p);
+        }
 
         executaPcbBuffer(e);
 
         if(getRemainingTime(p) <= 0){
+            printf("Processo %d acabou\n", getPid(p));
             finalizaPcbBuffer(e);
         }
     }
@@ -222,7 +223,62 @@ void escalonamentoRR(Escalonador *e){
 }
 
 void escalonamentoPP(Escalonador *e){
-    return;
+    
+    while(filaVazia(e->fila_prontos) == 0 || e->generator_done == FALSE){
+
+        if(e->generator_done == FALSE) verificaProcessosValidos(e);
+                    
+        pthread_mutex_lock(&e->scheduler_mutex);
+            
+        PCB *p = getProcessoMaiorPrioridade(e->fila_prontos);
+        setTipoEscalonamento(p, 3);
+
+        if(p == NULL){
+
+            while(1){
+                    
+                p = getProcessoMaiorPrioridade(e->fila_prontos);
+                if(p != NULL) break;
+                pthread_cond_wait(&e->scheduler_cv, &e->scheduler_mutex);
+            }
+        }
+
+        pthread_mutex_unlock(&e->scheduler_mutex);
+        
+        e->tempo_atual += getDuracao(p);
+
+        e->current_process = p;
+        int falta = getRemainingTime(p) - e->quantum;
+
+        pthread_mutex_t *mutex = getMutex(p);
+        pthread_cond_t *cond = getCondicional(p);
+
+        pthread_mutex_lock(mutex);
+        setState(p, RUNNING);
+        printf("Processo %d running, Remaining time: %d\n", getPid(p), getRemainingTime(p));
+        pthread_cond_broadcast(cond);
+
+        while(getRemainingTime(p) > falta){
+            pthread_cond_wait(cond, mutex);
+        }
+            
+        pthread_mutex_unlock(mutex);
+
+        PCB *prox_processo = getProcessoMaiorPrioridade(e->fila_prontos);
+        
+        if(getRemainingTime(p) > 0 && (getPrioridade(prox_processo) > getPrioridade(p))){
+            adicionaProcessoFila(e->fila_prontos, p);
+        }
+
+        executaPcbBuffer(e);
+
+        if(getRemainingTime(p) <= 0){
+            printf("Processo %d acabou\n", getPid(p));
+            finalizaPcbBuffer(e);
+        }
+    }
+
+    terminaExecucaoBuffer(e);
 }
 
 void realocaBuffer(Escalonador *e, int test){

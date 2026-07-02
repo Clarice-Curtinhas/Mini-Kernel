@@ -85,6 +85,42 @@ PCB* getProcesso(Fila *fila, int i){
     return fila->fila[i];
 }
 
+PCB* getProcessoMaiorPrioridade(Fila *fila){
+
+    PCB *maior = NULL;
+
+    int atual, ind_maior;
+
+    ind_maior = atual = fila->inicial;
+    maior = fila->fila[atual];
+
+    printf("entrou! %d\n", fila->tam);
+
+    for(int i = 0; i < fila->tam; i++){
+        if(getPrioridade(fila->fila[atual]) > getPrioridade(maior)){
+            printf("maior antigo:%d < agora: %d\n", getPrioridade(maior), getPrioridade(fila->fila[atual]));
+            maior = fila->fila[atual];
+            ind_maior = atual;
+        }
+
+        atual++;
+        atual = atual % fila->cap;
+    }
+
+    while(ind_maior != fila->final){
+        fila->fila[ind_maior] = fila->fila[ind_maior+1];
+        ind_maior++;
+    }
+
+    fila->fila[ind_maior] = NULL;
+    fila->final--;
+    fila->tam--;
+
+    if(fila->final < 0) fila->final = fila->cap;
+
+    return maior;
+}
+
 void desalocaFilaProcessos(Fila *fila){
 
     for(int i = 0; i < fila->cap; i++){

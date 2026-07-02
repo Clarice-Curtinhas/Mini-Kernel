@@ -18,6 +18,8 @@ int verificaSeExiste(Fila *fila, PCB *p);
 
 PCB** getVetor(Fila *fila);
 
+PCB* getProcessoMaiorPrioridade(Fila *fila);
+
 int getTam(Fila *fila);
 
 PCB* getProcesso(Fila *fila, int i);
