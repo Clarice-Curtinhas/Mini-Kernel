@@ -23,25 +23,27 @@ void *thr_func(void *arg){
         
         while(getState(p) != RUNNING){
 
+            if(getState(p) == FINISHED) break;
             pthread_cond_t *cond = getCondicional(p);
             pthread_cond_wait(cond, mutex);
         }
+         
+        int tipo_escalonador = getTipoEscalonamento(p);
 
-        pthread_mutex_unlock(mutex);
-
-        if(getTipoEscalonamento(p) == 2 && tempo > 500){
+        if((tipo_escalonador == 2  || tipo_escalonador == 3) && tempo >= 500){
+            printf("[TCB] Processo %d Remaining time %d\n", getPid(p), getRemainingTime(p));
             usleep(500 * 1000);
-            pthread_mutex_lock(mutex);
             setState(p, READY);
             diminuiRemainingTime(p, 500);
-            pthread_mutex_unlock(mutex);
         }
+
         else{
             usleep(tempo * 1000);
-            pthread_mutex_lock(mutex);
             diminuiRemainingTime(p, tempo);
-            pthread_mutex_unlock(mutex);
         }
+
+        pthread_mutex_unlock(mutex);
     }
+    //printf("Terminou thread processo %d\n", getPid(p));
 }
  

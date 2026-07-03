@@ -113,23 +113,44 @@ void diminuiRemainingTime(PCB *processo, int valor){
 }
 
 void imprimeProcesso(FILE *fp, PCB *processo){
-    
-    fprintf(fp, "\nProcess PID: %d\n", processo->pid);
 
-    fprintf(fp, "   número de threads: %d\n", processo->num_threads);
+    if(fp != NULL){
+        fprintf(fp, "\nProcess PID: %d\n", processo->pid);
 
-    for(int i = 0; i < processo->num_threads; i++){
-        fprintf(fp, "       thread: %d\n", i);
+        fprintf(fp, "   número de threads: %d\n", processo->num_threads);
+
+        for(int i = 0; i < processo->num_threads; i++){
+            fprintf(fp, "       thread: %d\n", i);
+        }
+
+        fprintf(fp, "   tamanho do processo: %d\n", processo->process_len);
+        fprintf(fp, "   tempo restante: %d\n", processo->remaining_time);
+        
+        fprintf(fp, "   prioridade: %d\n", processo->priority);
+
+        if(processo->state == READY) fprintf(fp, "   estado: READY\n");
+        else if(processo->state == RUNNING) fprintf(fp, "   estado: RUNNING\n");
+        else fprintf(fp, "   estado: FINISHED\n");
     }
 
-    fprintf(fp, "   tamanho do processo: %d\n", processo->process_len);
-    fprintf(fp, "   tempo restante: %d\n", processo->remaining_time);
-    
-    fprintf(fp, "   prioridade: %d\n", processo->priority);
+    else{
+        printf("\nProcess PID: %d\n", processo->pid);
 
-    if(processo->state == READY) fprintf(fp, "   estado: READY\n");
-    else if(processo->state == RUNNING) fprintf(fp, "   estado: RUNNING\n");
-    else fprintf(fp, "   estado: FINISHED\n");
+        printf("   número de threads: %d\n", processo->num_threads);
+
+        for(int i = 0; i < processo->num_threads; i++){
+            printf("       thread: %d\n", i);
+        }
+
+        printf("   tamanho do processo: %d\n", processo->process_len);
+        printf("   tempo restante: %d\n", processo->remaining_time);
+        
+        printf("   prioridade: %d\n", processo->priority);
+
+        if(processo->state == READY) printf("   estado: READY\n");
+        else if(processo->state == RUNNING) printf("   estado: RUNNING\n");
+        else printf("   estado: FINISHED\n");
+    }
 }
 
 void desalocaProcesso(PCB *processo){

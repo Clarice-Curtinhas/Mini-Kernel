@@ -10,9 +10,9 @@ typedef struct tFila {
 
 Fila *criaFila(int num_processos){
 
-    Fila *f = malloc(num_processos * sizeof(Fila));
+    Fila *f = (Fila*) calloc(1, sizeof(Fila));
     
-    f->fila = malloc(num_processos * sizeof(PCB*));
+    f->fila = (PCB**) calloc(num_processos, sizeof(PCB*));
     f->inicial = f->final = 0;
     f->cap = num_processos;
     f->tam = 0;
@@ -44,13 +44,13 @@ int adicionaProcessoFila(Fila *fila, PCB *p){
 
 int verificaSeExiste(Fila *fila, PCB *p){
     
-    int i = fila->inicial;
+    int i = fila->inicial % fila->cap;
 
     for(int count = 0; count < fila->tam; count++){
 
         if(fila->fila[i] == p) return 1;
 
-        i++;
+        i = (i+1) % fila->cap;
     }
 
     return 0;
@@ -87,36 +87,44 @@ PCB* getProcesso(Fila *fila, int i){
 
 PCB* getProcessoMaiorPrioridade(Fila *fila){
 
+    if(fila->tam == 0){
+        return NULL;
+    }
+
     PCB *maior = NULL;
 
-    int atual, ind_maior;
+    int atual, ind_maior, ind_prox;
 
-    ind_maior = atual = fila->inicial;
+    ind_maior = atual = fila->inicial % fila->cap;
     maior = fila->fila[atual];
 
-    printf("entrou! %d\n", fila->tam);
+    //printf("tam da fila: %d\n", fila->tam);
 
     for(int i = 0; i < fila->tam; i++){
-        if(getPrioridade(fila->fila[atual]) > getPrioridade(maior)){
-            printf("maior antigo:%d < agora: %d\n", getPrioridade(maior), getPrioridade(fila->fila[atual]));
-            maior = fila->fila[atual];
-            ind_maior = atual;
+        //printf("Prioridade maior: %d, Prioridade atual: %d\n", getPrioridade(maior), getPrioridade(fila->fila[atual]));
+        if(fila->fila[atual] != NULL){
+            if(getPrioridade(fila->fila[atual]) < getPrioridade(maior)){
+                //printf("maior antigo:%d < agora: %d\n", getPrioridade(maior), getPrioridade(fila->fila[atual]));
+                maior = fila->fila[atual];
+                ind_maior = atual;
+            }
         }
 
-        atual++;
-        atual = atual % fila->cap;
+        //printf("pid: %d - prioridade: %d\n", getPid(fila->fila[i]), getPrioridade(fila->fila[i]));
+
+        atual = (atual+1) % fila->cap;
     }
+
+    fila->final = (fila->final - 1 + fila->cap) % fila->cap;
 
     while(ind_maior != fila->final){
-        fila->fila[ind_maior] = fila->fila[ind_maior+1];
-        ind_maior++;
+        ind_prox = (ind_maior+1) % fila->cap;
+        fila->fila[ind_maior] = fila->fila[ind_prox];
+        ind_maior = ind_prox;
     }
 
-    fila->fila[ind_maior] = NULL;
-    fila->final--;
+    fila->fila[fila->final] = NULL;
     fila->tam--;
-
-    if(fila->final < 0) fila->final = fila->cap;
 
     return maior;
 }
@@ -140,6 +148,6 @@ void desalocaFilaProntos(Fila *fila){
 void imprimeFila(FILE *fp, Fila *fila){
     
     for(int i = 0; i != fila->cap; i++){
-        imprimeProcesso(fp, fila->fila[i]);
+        if(fila->fila[i] != NULL) imprimeProcesso(fp, fila->fila[i]);
     }
 }

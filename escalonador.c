@@ -76,7 +76,7 @@ void *executaEscalonamento(void *arg){
         escalonamentoRR(e);
     }
 
-    else{
+    else if(e->scheduler_type == PP){
         escalonamentoPP(e);
     }
 }
@@ -99,6 +99,7 @@ void verificaProcessosValidos(Escalonador *e){
         
             soma = adicionaProcessoFila(e->fila_prontos, p);
             e->total_prontos += soma;
+            //printf("Tam fila prontos: %d\n", getTam(e->fila_prontos));
         }
 
         pthread_mutex_unlock(&e->scheduler_mutex);
@@ -223,6 +224,9 @@ void escalonamentoRR(Escalonador *e){
 }
 
 void escalonamentoPP(Escalonador *e){
+    PCB *antigo, *atual;
+
+    antigo = atual = NULL;
     
     while(filaVazia(e->fila_prontos) == 0 || e->generator_done == FALSE){
 
@@ -231,6 +235,8 @@ void escalonamentoPP(Escalonador *e){
         pthread_mutex_lock(&e->scheduler_mutex);
             
         PCB *p = getProcessoMaiorPrioridade(e->fila_prontos);
+        atual = p;
+
         setTipoEscalonamento(p, 3);
 
         if(p == NULL){
@@ -238,6 +244,7 @@ void escalonamentoPP(Escalonador *e){
             while(1){
                     
                 p = getProcessoMaiorPrioridade(e->fila_prontos);
+                atual = p;
                 if(p != NULL) break;
                 pthread_cond_wait(&e->scheduler_cv, &e->scheduler_mutex);
             }
@@ -255,7 +262,7 @@ void escalonamentoPP(Escalonador *e){
 
         pthread_mutex_lock(mutex);
         setState(p, RUNNING);
-        printf("Processo %d running, Remaining time: %d\n", getPid(p), getRemainingTime(p));
+        //printf("Processo %d running, Remaining time: %d\n", getPid(p), getRemainingTime(p));
         pthread_cond_broadcast(cond);
 
         while(getRemainingTime(p) > falta){
@@ -264,13 +271,16 @@ void escalonamentoPP(Escalonador *e){
             
         pthread_mutex_unlock(mutex);
 
-        PCB *prox_processo = getProcessoMaiorPrioridade(e->fila_prontos);
+        printf("Processo %d faltando %d\n", getPid(p), getRemainingTime(p));
+
+        if(antigo != atual){
+            executaPcbBuffer(e);
+        }
         
-        if(getRemainingTime(p) > 0 && (getPrioridade(prox_processo) > getPrioridade(p))){
+        if(getRemainingTime(p) > 0){
+            antigo = p;
             adicionaProcessoFila(e->fila_prontos, p);
         }
-
-        executaPcbBuffer(e);
 
         if(getRemainingTime(p) <= 0){
             printf("Processo %d acabou\n", getPid(p));
@@ -345,7 +355,7 @@ void executaPcbBuffer(Escalonador *e){
     }
 
     else if(e->scheduler_type == PP){
-        snprintf(frase, sizeof(frase), "[PRIORITY] Executando processo PID %d com prioridade %dms\n", getPid(e->current_process), getPrioridade(e->current_process));
+        snprintf(frase, sizeof(frase), "[PRIORITY] Executando processo PID %d prioridade %d\n", getPid(e->current_process), getPrioridade(e->current_process));
         realocaBuffer(e, sizeof(frase));
         strcat(e->log_buffer, frase);
         e->final_buffer += sizeof(frase);
