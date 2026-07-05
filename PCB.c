@@ -128,7 +128,7 @@ void diminuiRemainingTime(PCB *processo, int valor){
         processo->state = FINISHED;
         printf("Processo %d foi finished\n", processo->pid);
     }
-    
+
     pthread_cond_t *cond = getCondicional(processo);
     pthread_cond_broadcast(cond);
 }

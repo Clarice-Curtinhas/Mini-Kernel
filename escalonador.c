@@ -31,6 +31,7 @@ typedef struct tEscalonador {
     int tipo_processador;
     int indice_processador;
     int terminou_buffer;
+    int rodando; // processos que ainda estão rodando no multiprocessamento
 
     pthread_t *thread_id;
     pthread_cond_t scheduler_cv;
@@ -65,6 +66,7 @@ Escalonador* criaEscalonador(int qtd_processos, int tipo_processador){
     e->tipo_processador = tipo_processador;
     e->indice_processador = 0;
     e->terminou_buffer = 0;
+    e->rodando = 0;
 
     if(tipo_processador == MULTI){
         pthread_mutex_init(&e->multi_mutex, NULL);
@@ -141,7 +143,7 @@ void verificaProcessosValidos(Escalonador *e){
 
         if(p == NULL) continue;
 
-        if(getState(p) == FINISHED) continue;
+        if(getState(p) == FINISHED || getState(p) == RUNNING) continue;
 
         if(getTempoChegada(p) <= e->tempo_atual){
             if(verificaSeExiste(e->fila_prontos, p) != 1){
@@ -225,10 +227,6 @@ void FCFS_multi(Escalonador *e){
     while(filaVazia(e->fila_prontos) == 0 || e->generator_done == FALSE){
         
         if(e->generator_done == FALSE) verificaProcessosValidos(e);
-
-        if(filaVazia(e->fila_prontos)){
-            break;
-        }
         
         if(current_process == NULL || getState(current_process) == FINISHED){
         
@@ -239,6 +237,10 @@ void FCFS_multi(Escalonador *e){
             }
 
             PCB *p = retiraProcesso(e->fila_prontos);
+
+            if (p != NULL) {
+                e->rodando++;
+            }
             
             if(e->qtd_processos > 1){
                 pthread_mutex_unlock(&e->multi_mutex);
@@ -246,13 +248,24 @@ void FCFS_multi(Escalonador *e){
 
             if(p == NULL){
 
-                while(1){
-                    if(e->generator_done == TRUE && filaVazia(e->fila_prontos) == 1) break;
+                while(e->generator_done == FALSE && filaVazia(e->fila_prontos) == 0){
+                    pthread_mutex_lock(&e->multi_mutex);
+                    /*if(e->generator_done == TRUE && filaVazia(e->fila_prontos) == 1 && e->rodando == 0){
+                        pthread_mutex_unlock(&e->multi_mutex);
+                        break;
+                    }
+
+                    pthread_mutex_unlock(&e->multi_mutex);*/
 
                     pthread_cond_wait(&e->scheduler_cv, &e->scheduler_mutex);
 
                     pthread_mutex_lock(&e->multi_mutex);
                     p = retiraProcesso(e->fila_prontos);
+
+                    if (p != NULL) {
+                        e->rodando++;
+                    }
+
                     pthread_mutex_unlock(&e->multi_mutex);
 
                     if(p != NULL) break;
@@ -273,6 +286,11 @@ void FCFS_multi(Escalonador *e){
                 pthread_mutex_unlock(&e->scheduler_mutex);
 
                 //continue para pular esse que já acabou e pegar outro
+
+                pthread_mutex_lock(&e->multi_mutex);
+                e->rodando--;
+                pthread_mutex_unlock(&e->multi_mutex);
+
                 continue;
             }
 
@@ -282,6 +300,7 @@ void FCFS_multi(Escalonador *e){
             ///
             
             pthread_mutex_lock(&e->multi_mutex);
+            e->rodando++;
 
             e->current_process = p;
             executaPcbBuffer(e);
@@ -300,25 +319,38 @@ void FCFS_multi(Escalonador *e){
 
             setTipoEscalonamento(p, 1);
 
-            int falta = getRemainingTime(p) - getQuantumProcesso(p);
+            int falta = getRemainingTime(p) - e->quantum;
 
-            printf("Processo %d running, Remainin[FCFS] Executando processo PID 2 // processador 1g time: %d\n", getPid(p), getRemainingTime(p));
+           // printf("Processo %d running, Remainin[FCFS] Executando processo PID 2 // processador 1g time: %d\n", getPid(p), getRemainingTime(p));
 
             pthread_mutex_lock(&e->multi_mutex);
-            e->tempo_atual += getQuantumProcesso(p);
+            e->tempo_atual += e->quantum;
             pthread_mutex_unlock(&e->multi_mutex);
 
             current_process = p;
             pthread_cond_t *cond = getCondicional(p);
 
-            finished = 0;
 
             pthread_mutex_lock(mutex);
             setState(p, RUNNING);
             setThreadsRestantes(p);
+
+            /*pthread_mutex_lock(&e->multi_mutex);
+
+            e->current_process = p;
+            executaPcbBuffer(e);
+            
+            pthread_mutex_unlock(&e->multi_mutex);*/
+
             pthread_cond_broadcast(cond);
 
-            if(getNumThreads(p) == 1){
+            while(getRemainingTime(p) > falta && getState(p) != FINISHED){
+                pthread_cond_wait(cond, mutex);
+            }
+
+            pthread_mutex_unlock(mutex);
+
+            /*if(getNumThreads(p) == 1){
                 while(getState(p) != FINISHED){
                     pthread_cond_wait(cond, mutex);
                 }
@@ -329,10 +361,15 @@ void FCFS_multi(Escalonador *e){
                 while(getRemainingTime(p) > falta && getState(p) != FINISHED){
                     pthread_cond_wait(cond, mutex);
                 }
-            }
+            }*/
+
+            finished = 0;
+
+            pthread_mutex_lock(mutex);
 
             if((getRemainingTime(p) <= 0 || getThreadsExecutadas(p) == 0) && getState(p) != FINISHED){
                 setState(p, FINISHED);
+                
                 finished = 1;
             }
             
@@ -340,6 +377,10 @@ void FCFS_multi(Escalonador *e){
             else acabou = 0;
 
             pthread_mutex_unlock(mutex);
+
+            pthread_mutex_lock(&e->multi_mutex);
+            e->rodando--;
+            pthread_mutex_unlock(&e->multi_mutex);
 
             if(acabou == 1){
                 if(finished == 1){
@@ -350,9 +391,13 @@ void FCFS_multi(Escalonador *e){
                 }
 
                 current_process = NULL;
+
+                pthread_mutex_lock(&e->scheduler_mutex);
+                pthread_cond_broadcast(&e->scheduler_cv);
+                pthread_mutex_unlock(&e->scheduler_mutex);
             }
 
-            else if(getNumThreads(p) > 1){
+            if(getRemainingTime(p) > 0){
                 pthread_mutex_lock(&e->scheduler_mutex);
                 adicionaProcessoFila(e->fila_prontos, p);
                 pthread_cond_broadcast(&e->scheduler_cv);

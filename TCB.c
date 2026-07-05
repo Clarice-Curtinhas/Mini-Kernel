@@ -14,12 +14,12 @@ void *thr_func(void *arg){
    
     PCB *p = (PCB*)arg;
     int tempo = getDuracao(p)/getNumThreads(p);
+    int tipo_processador = getTipoProcessador(p);
 
     pthread_mutex_t *mutex = getMutex(p);
+    pthread_mutex_lock(mutex);
     
     while(getState(p) != FINISHED){
-        
-        pthread_mutex_lock(mutex);
         
         while(getState(p) != RUNNING){
 
@@ -30,21 +30,32 @@ void *thr_func(void *arg){
          
         int tipo_escalonador = getTipoEscalonamento(p);
 
-        if((tipo_escalonador == 2  || tipo_escalonador == 3) && tempo >= 500){
+        if(tipo_processador == 0){
+
+            if((tipo_escalonador == 2  || tipo_escalonador == 3) && tempo >= 500){
+                printf("[TCB] Processo %d Remaining time %d\n", getPid(p), getRemainingTime(p));
+                usleep(500 * 1000);
+                setState(p, READY);
+                diminuiRemainingTime(p, 500);
+            }
+
+            else{
+                usleep(tempo * 1000);
+                printf("TCB vai diminuir %d do processo %d\n", tempo, getPid(p));
+                diminuiRemainingTime(p, tempo);
+            }
+        }
+
+        else{
             printf("[TCB] Processo %d Remaining time %d\n", getPid(p), getRemainingTime(p));
             usleep(500 * 1000);
             setState(p, READY);
             diminuiRemainingTime(p, 500);
         }
 
-        else{
-            usleep(tempo * 1000);
-            printf("TCB vai diminuir %d do processo %d\n", tempo, getPid(p));
-            diminuiRemainingTime(p, tempo);
-        }
-
-        pthread_mutex_unlock(mutex);
     }
+
+    pthread_mutex_unlock(mutex);
     //printf("Terminou thread processo %d\n", getPid(p));
 
     printf("Saiu da TCB\n");
