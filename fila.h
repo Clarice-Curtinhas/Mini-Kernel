@@ -22,6 +22,8 @@ PCB* getProcessoMaiorPrioridade(Fila *fila);
 
 int getTam(Fila *fila);
 
+PCB* getPrimeiro(Fila *fila);
+
 PCB* getProcesso(Fila *fila, int i);
 
 void desalocaFilaProcessos(Fila *fila);

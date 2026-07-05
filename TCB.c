@@ -45,11 +45,10 @@ void *thr_func(void *arg){
                 diminuiRemainingTime(p, tempo);
             }
         }
-
         else{
-            printf("[TCB] Processo %d Remaining time %d\n", getPid(p), getRemainingTime(p));
+            printf("[TCB] Processo %d executando, Remaining time %d\n", getPid(p), getRemainingTime(p));
             usleep(500 * 1000);
-            setState(p, READY);
+            //setState(p, READY);
             diminuiRemainingTime(p, 500);
         }
 
@@ -57,9 +56,7 @@ void *thr_func(void *arg){
 
     pthread_mutex_unlock(mutex);
     //printf("Terminou thread processo %d\n", getPid(p));
-
-    printf("Saiu da TCB\n");
-
+    
     return NULL;
 }
  

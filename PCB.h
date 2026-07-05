@@ -25,7 +25,11 @@ int getDuracao(PCB *processo);
 
 int getQuantumProcesso(PCB *processo);
 
-int getThreadsExecutadas(PCB *processo);
+int getThreadsRestantes(PCB *processo);
+
+void setFinalizado(PCB *processo);
+
+int getFinalizado(PCB *processo);
 
 void setThreadsRestantes(PCB *processo);
 

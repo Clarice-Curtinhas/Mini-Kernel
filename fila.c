@@ -85,6 +85,10 @@ PCB *retiraProcesso(Fila *fila){
     return p;
 }
 
+PCB* getPrimeiro(Fila *fila){
+    return fila->fila[fila->inicial];
+}
+
 PCB* getProcesso(Fila *fila, int i){
     
     i = i%fila->cap;
