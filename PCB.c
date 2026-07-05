@@ -12,6 +12,8 @@ typedef struct tPCB {
     int num_threads; 
     int start_time; 
     int tipo_escalonamento;
+    int tipo_processador;
+    int threads_restantes;
     ProcessState state; 
     pthread_mutex_t mutex; 
     pthread_cond_t cv; 
@@ -26,7 +28,7 @@ int comparaProcessos(const void *a, const void *b){
     return getTempoChegada(p1) - getTempoChegada(p2);
 }
 
-PCB* criaProcesso(int duracao, int prioridade, int n_threads, int tempo_chegada, int pid){
+PCB* criaProcesso(int duracao, int prioridade, int n_threads, int tempo_chegada, int pid, int tipo_processador){
 
     PCB *processo = malloc(sizeof(PCB));
 
@@ -38,6 +40,8 @@ PCB* criaProcesso(int duracao, int prioridade, int n_threads, int tempo_chegada,
     processo->start_time = tempo_chegada;
     processo->state = READY;  ///LEMBRAR DE ALTERAR PARA TESTES
     processo->tipo_escalonamento = 0;
+    processo->tipo_processador = tipo_processador;
+    processo->threads_restantes = n_threads;
 
     pthread_mutex_init(&processo->mutex, NULL);
     pthread_cond_init(&processo->cv, NULL);
@@ -55,8 +59,24 @@ ProcessState getState(PCB *processo){
     return processo->state;
 }
 
+void setThreadsRestantes(PCB *processo){
+    processo->threads_restantes--;
+}
+
 int getRemainingTime(PCB *processo){
     return processo->remaining_time;
+}
+
+int getThreadsExecutadas(PCB *processo){
+    return processo->threads_restantes;
+}
+
+int getQuantumProcesso(PCB *processo){
+    return getDuracao(processo)/getNumThreads(processo);
+}
+
+int getTipoProcessador(PCB *processo){
+    return processo->tipo_processador;
 }
 
 void setState(PCB *processo, ProcessState novoEstado){
@@ -106,8 +126,9 @@ void diminuiRemainingTime(PCB *processo, int valor){
     if(processo->remaining_time <= 0){
         processo->remaining_time = 0;
         processo->state = FINISHED;
+        printf("Processo %d foi finished\n", processo->pid);
     }
-
+    
     pthread_cond_t *cond = getCondicional(processo);
     pthread_cond_broadcast(cond);
 }

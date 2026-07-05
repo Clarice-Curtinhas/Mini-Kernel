@@ -10,15 +10,19 @@
 
 typedef struct tEscalonador Escalonador;
 
-Escalonador* criaEscalonador(int qtd_processos);
+Escalonador* criaEscalonador(int qtd_processos, int tipo_processador);
 
 Fila* getFila(Escalonador *e);
+
+pthread_t getThread(Escalonador *e, int i);
 
 void setPolitica(Escalonador *e, int escalonamento);
 
 void *executaEscalonamento(void *arg);
 
-void escalonamentoFCFS(Escalonador *e);
+void FCFS_mono(Escalonador *e);
+
+void FCFS_multi(Escalonador *e);
 
 void escalonamentoRR(Escalonador *e);
 

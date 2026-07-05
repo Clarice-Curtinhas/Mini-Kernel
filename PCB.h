@@ -13,7 +13,7 @@ typedef char ProcessState;
 
 typedef struct tPCB PCB;
 
-PCB* criaProcesso(int duracao, int prioridade, int n_threads, int tempo_chegada, int pid);
+PCB* criaProcesso(int duracao, int prioridade, int n_threads, int tempo_chegada, int pid, int tipo_processador);
 
 ProcessState getState(PCB *processo);
 
@@ -22,6 +22,14 @@ void setState(PCB *processo, ProcessState novoEstado);
 int getPid(PCB *processo);
 
 int getDuracao(PCB *processo);
+
+int getQuantumProcesso(PCB *processo);
+
+int getThreadsExecutadas(PCB *processo);
+
+void setThreadsRestantes(PCB *processo);
+
+int getTipoProcessador(PCB *processo);
 
 int getRemainingTime(PCB *processo);
 

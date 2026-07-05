@@ -39,11 +39,16 @@ void *thr_func(void *arg){
 
         else{
             usleep(tempo * 1000);
+            printf("TCB vai diminuir %d do processo %d\n", tempo, getPid(p));
             diminuiRemainingTime(p, tempo);
         }
 
         pthread_mutex_unlock(mutex);
     }
     //printf("Terminou thread processo %d\n", getPid(p));
+
+    printf("Saiu da TCB\n");
+
+    return NULL;
 }
  

@@ -24,7 +24,7 @@ int main(int argc, char *argv[]){
 
     fscanf(entrada, "%d", &n_processos);
 
-    escalonador = criaEscalonador(n_processos);
+    escalonador = criaEscalonador(n_processos, 0);
 
     for(int i = 0; i < n_processos; i++){
 
@@ -33,7 +33,7 @@ int main(int argc, char *argv[]){
         fscanf(entrada, "%d", &n_threads);
         fscanf(entrada, "%d", &tempo_chegada);
         
-        PCB* p = criaProcesso(duracao_processo, prioridade, n_threads, tempo_chegada, i + 1);
+        PCB* p = criaProcesso(duracao_processo, prioridade, n_threads, tempo_chegada, i + 1, 0);
         adicionaProcesso(escalonador, p);
     }
 
