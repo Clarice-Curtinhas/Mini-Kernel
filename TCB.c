@@ -45,13 +45,22 @@ void *thr_func(void *arg){
                 diminuiRemainingTime(p, tempo);
             }
         }
+        
         else{
-            printf("[TCB] Processo %d executando, Remaining time %d\n", getPid(p), getRemainingTime(p));
-            usleep(500 * 1000);
-            //setState(p, READY);
-            diminuiRemainingTime(p, 500);
-        }
+            if(tipo_escalonador == 1){
+                printf("[TCB] Processo %d executando, Remaining time %d\n", getPid(p), getRemainingTime(p));
+                usleep(500 * 1000);
+                //setState(p, READY);
+                diminuiRemainingTime(p, 500);
+            }
 
+            else if(tipo_escalonador == 2 || tipo_escalonador == 3){
+                printf("[TCB] Processo %d Remaining time %d\n", getPid(p), getRemainingTime(p));
+                usleep(500 * 1000);
+                setState(p, READY);
+                diminuiRemainingTime(p, 500);
+            }
+        }
     }
 
     pthread_mutex_unlock(mutex);

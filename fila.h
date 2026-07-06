@@ -8,7 +8,7 @@ typedef struct tFila Fila;
 
 Fila *criaFila(int num_processos);
 
-void adicionaProcessoFila(Fila *fila, PCB *p);
+int adicionaProcessoFila(Fila *fila, PCB *p);
 
 PCB *retiraProcesso(Fila *fila);
 

@@ -28,20 +28,20 @@ int getTam(Fila *fila){
     return fila->tam;
 }
 
-void adicionaProcessoFila(Fila *fila, PCB *p){
+int adicionaProcessoFila(Fila *fila, PCB *p){
 
     //printf("Processo %d entrou na fila\n", getPid(p));
 
-    if(verificaSeExiste(fila, p) == 1) return;
+    if(verificaSeExiste(fila, p) == 1) return 0;
     
-    if(fila->tam == fila->cap) return;
+    if(fila->tam == fila->cap) return 0;
 
     fila->fila[fila->final] = p;
     fila->final++;
     fila->final = fila->final % fila->cap;
     fila->tam++;
 
-    //printf("Adicionou algo...\n");
+    return 1;
 }
 
 int verificaSeExiste(Fila *fila, PCB *p){
@@ -86,6 +86,16 @@ PCB *retiraProcesso(Fila *fila){
 }
 
 PCB* getPrimeiro(Fila *fila){
+    PCB* prim = fila->fila[fila->inicial];
+
+    if((getState(prim) == RUNNING && getNumThreads(prim) == 1) || (getState(prim) == FINISHED) || getRemainingTime(prim) <= 0){
+        return fila->fila[fila->inicial+1];
+    }
+
+    if(fila->tam == 1){
+        return fila->fila[fila->inicial];
+    }
+
     return fila->fila[fila->inicial];
 }
 

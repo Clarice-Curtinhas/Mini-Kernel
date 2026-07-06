@@ -24,9 +24,13 @@ void FCFS_mono(Escalonador *e);
 
 void FCFS_multi(Escalonador *e);
 
-void escalonamentoRR(Escalonador *e);
+void RR_mono(Escalonador *e);
 
-void escalonamentoPP(Escalonador *e);
+void RR_multi(Escalonador *e);
+
+void PP_mono(Escalonador *e);
+
+void PP_multi(Escalonador *e);
 
 void realocaBuffer(Escalonador *e, int test);
 
