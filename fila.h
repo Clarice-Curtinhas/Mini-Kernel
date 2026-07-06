@@ -30,6 +30,8 @@ PCB* getPrimeiro(Fila *fila);
 
 PCB* getProcesso(Fila *fila, int i);
 
+void RetiraProcessoEspecifico(Fila *fila, PCB *p);
+
 void desalocaFilaProcessos(Fila *fila);
 
 void desalocaFilaProntos(Fila *fila);

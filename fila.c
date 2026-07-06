@@ -228,6 +228,37 @@ PCB* getMaiorPrioridadeMulti(Fila *fila){
     return maior;
 }
 
+void RetiraProcessoEspecifico(Fila *fila, PCB *p){
+    
+    int ind_prox, atual = fila->inicial;
+    int encontrou = 0;
+
+    for(int i = 0; i < fila->tam; i++){
+        if(fila->fila[atual] != NULL){
+            if(fila->fila[atual] == p){
+                encontrou = 1;
+                break;
+            }
+        }
+
+        atual = (atual+1) % fila->cap;
+    }
+
+    if(encontrou == 0) return;
+
+
+    fila->final = (fila->final - 1 + fila->cap) % fila->cap;
+
+    while(atual != fila->final){
+        ind_prox = (atual+1) % fila->cap;
+        fila->fila[atual] = fila->fila[ind_prox];
+        atual = ind_prox;
+    }
+
+    fila->fila[fila->final] = NULL;
+    fila->tam--;
+}
+
 void desalocaFilaProcessos(Fila *fila){
 
     for(int i = 0; i < fila->cap; i++){

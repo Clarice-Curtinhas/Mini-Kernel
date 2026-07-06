@@ -627,14 +627,14 @@ void PP_multi(Escalonador *e){
             pthread_mutex_lock(&e->multi_mutex);
         }
             
-        PCB *p = getProcessoMaiorPrioridade(e->fila_prontos);
+        PCB *p = getMaiorPrioridadeMulti(e->fila_prontos);
         atual = p;
 
         if(p == NULL){
 
             while(1){
                     
-                p = getProcessoMaiorPrioridade(e->fila_prontos);
+                p = getMaiorPrioridadeMulti(e->fila_prontos);
                 atual = p;
                 if(p != NULL) break;
                 pthread_cond_wait(&e->scheduler_cv, &e->scheduler_mutex);
@@ -670,17 +670,22 @@ void PP_multi(Escalonador *e){
 
         setState(p, RUNNING);
         setThreadsRestantes(p);
-        e->tempo_atual += e->quantum;
         pthread_mutex_unlock(&e->multi_mutex);
 
-        printf("tempo atual incrementado: %d\n", e->tempo_atual);
         //printf("Processo %d running, Remaining time: %d\n", getPid(p), getRemainingTime(p));
         pthread_cond_broadcast(cond);
 
         while(getRemainingTime(p) > falta){
             pthread_cond_wait(cond, mutex);
         }
+
+        pthread_mutex_unlock(mutex);
         //printf("Processo %d faltando %d\n", getPid(p), getRemainingTime(p));
+
+        pthread_mutex_lock(&e->multi_mutex);
+        e->tempo_atual += e->quantum;
+        printf("tempo atual incrementado: %d\n", e->tempo_atual);
+
 
         if(antigo != atual){
             executaPcbBuffer(e);
@@ -689,24 +694,26 @@ void PP_multi(Escalonador *e){
         if(getRemainingTime(p) > 0){
             pthread_mutex_lock(&e->scheduler_mutex);
             antigo = p;
-            adicionaProcessoFila(e->fila_prontos, p);
             pthread_mutex_unlock(&e->scheduler_mutex);
         }
 
+        pthread_mutex_unlock(&e->multi_mutex);
+
         if(getRemainingTime(p) <= 0){
-            printf("Processo %d acabou\n", getPid(p));
+            printf("Processo %d acabou!\n", getPid(p));
+
+            printf("Processo %d saiu do lock!\n", getPid(p));
             //Impressão de término do processo
 
             pthread_mutex_lock(&e->multi_mutex);
-            e->current_process = p;
+            e->current_process = atual;
+            RetiraProcessoEspecifico(e->fila_prontos, atual);
             finalizaPcbBuffer(e);
 
             pthread_mutex_unlock(&e->multi_mutex);
 
             ///acaba
         }
-
-        pthread_mutex_unlock(mutex);
     }
 }
 
