@@ -63,6 +63,7 @@ void *thr_func(void *arg){
                 usleep(500 * 1000);
                 //setState(p, READY);
                 diminuiRemainingTime(p, 500);
+                printf("[TCB] Processo %d executando, Remaining time %d\n", getPid(p), getRemainingTime(p));
             }
 
             else if(tipo_escalonador == 2 || tipo_escalonador == 3){

@@ -276,6 +276,8 @@ void FCFS_multi(Escalonador *e){
     while(filaVazia(e->fila_prontos) == 0 || e->generator_done == FALSE){
 
         if(e->generator_done == FALSE) verificaProcessosValidos(e);
+
+        printf("Quantidade de processos prontos: %d\n", getTam(e->fila_prontos));
         
         if(e->current_process_multi[id] == NULL || getState(e->current_process_multi[id]) == FINISHED){
             
@@ -309,10 +311,10 @@ void FCFS_multi(Escalonador *e){
             }
 
             if(pthread_self() == e->thread_id[0]){
-                printf("Processador 0 pegou o processo %d\n", getPid(p));
+                printf("\n    Processador 0 pegou o processo %d\n", getPid(p));
             }
             else if(pthread_self() == e->thread_id[1]){
-                printf("Processador 1 pegou o processo %d\n", getPid(p));
+                printf("\n    Processador 1 pegou o processo %d\n", getPid(p));
             }
 
             pthread_mutex_unlock(&e->scheduler_mutex);
@@ -338,27 +340,25 @@ void FCFS_multi(Escalonador *e){
 
                 printf("Processo %d acabou!\n", getPid(p));
 
-                printf("Processo %d saiu do lock!\n", getPid(p));
-
                 pthread_mutex_lock(&e->scheduler_mutex);
 
                 //Impressão de término do processo
 
                 pthread_mutex_lock(&e->multi_mutex);
-                
-                printf("Processo %d acabou!\n", getPid(p));
+                printf("Processo %d saiu do lock!\n", getPid(p));
+
                 e->current_process = p;
                 finalizaPcbBuffer(e);
+                RetiraProcessoEspecifico(e->fila_prontos, p);
 
                 pthread_mutex_unlock(&e->multi_mutex);
 
                 ///acaba
 
-                p = retiraProcesso(e->fila_prontos);
-
                 e->current_process_multi[id] = NULL;
 
                 pthread_mutex_unlock(&e->scheduler_mutex);
+                printf("Processo %d acabou!\n", getPid(p));
             }
             
             pthread_mutex_unlock(mutex);
@@ -686,10 +686,6 @@ void PP_multi(Escalonador *e){
         e->tempo_atual += e->quantum;
         printf("tempo atual incrementado: %d\n", e->tempo_atual);
 
-
-        if(antigo != atual){
-            executaPcbBuffer(e);
-        }
         
         if(getRemainingTime(p) > 0){
             pthread_mutex_lock(&e->scheduler_mutex);
@@ -699,10 +695,9 @@ void PP_multi(Escalonador *e){
 
         pthread_mutex_unlock(&e->multi_mutex);
 
-        if(getRemainingTime(p) <= 0){
-            printf("Processo %d acabou!\n", getPid(p));
+        if(getRemainingTime(p) <= 0 || getState(p) == FINISHED){
+            printf("    Processo %d imprimiu término\n", getPid(p));
 
-            printf("Processo %d saiu do lock!\n", getPid(p));
             //Impressão de término do processo
 
             pthread_mutex_lock(&e->multi_mutex);

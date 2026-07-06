@@ -122,12 +122,12 @@ PCB* getPrimeiro(Fila *fila){
 
     PCB* prim = fila->fila[fila->inicial];
 
-    if((getState(prim) == RUNNING && getNumThreads(prim) == 1) || (getState(prim) == FINISHED) || getRemainingTime(prim) <= 0){
-        return fila->fila[fila->inicial+1];
-    }
-
     if(fila->tam == 1){
         return fila->fila[fila->inicial];
+    }
+
+    else if((getState(prim) == RUNNING && getNumThreads(prim) == 1) || (getState(prim) == FINISHED) || getRemainingTime(prim) <= 0){
+        return fila->fila[fila->inicial+1];
     }
 
     return fila->fila[fila->inicial];
@@ -201,23 +201,42 @@ PCB* getMaiorPrioridadeMulti(Fila *fila){
     }
 
     PCB *maior = NULL;
+    PCB *seg_maior = NULL;
 
-    int atual, ind_maior;
+    int atual, ind_maior, ind_seg_maior;
 
-    atual = ind_maior = fila->inicial % fila->cap;
-    maior = fila->fila[atual];
+    atual = fila->inicial % fila->cap;
 
     for(int i = 0; i < fila->tam; i++){
+
         if(fila->fila[atual] != NULL){
-            if(getPrioridade(fila->fila[atual]) < getPrioridade(maior)){
+            if(maior == NULL || getPrioridade(fila->fila[atual]) < getPrioridade(maior)){
+                seg_maior = maior;
+                ind_seg_maior = ind_maior;
+
                 maior = fila->fila[atual];
                 ind_maior = atual;
             }
 
-            if(getPrioridade(fila->fila[atual]) == getPrioridade(maior)){
+            else if(getPrioridade(fila->fila[atual]) == getPrioridade(maior)){
                 if(getTempoChegada(fila->fila[atual]) < getTempoChegada(maior)){
+                    seg_maior = maior;
+                    ind_seg_maior = ind_maior;
+
                     maior = fila->fila[atual];
                     ind_maior = atual;
+                }
+            }
+
+            else if(seg_maior == NULL || getPrioridade(fila->fila[atual]) < getPrioridade(seg_maior)){
+                seg_maior = fila->fila[atual];
+                ind_seg_maior = atual;
+            }
+
+            else if(getPrioridade(fila->fila[atual]) == getPrioridade(seg_maior)){
+                if(getTempoChegada(fila->fila[atual]) < getTempoChegada(seg_maior)){
+                    seg_maior = fila->fila[atual];
+                    ind_seg_maior = atual;
                 }
             }
         }
@@ -225,13 +244,27 @@ PCB* getMaiorPrioridadeMulti(Fila *fila){
         atual = (atual+1) % fila->cap;
     }
 
-    return maior;
+    if(fila->tam == 1 || (fila->tam > 1 && getState(maior) == READY)){
+        return maior;
+    }
+
+    else{
+        return seg_maior;
+    }
 }
 
 void RetiraProcessoEspecifico(Fila *fila, PCB *p){
     
     int ind_prox, atual = fila->inicial;
     int encontrou = 0;
+
+    if(p == NULL) return;
+
+    if(fila->tam == 1){
+        fila->fila[fila->inicial] = NULL;
+        fila->tam--;
+        return;
+    }
 
     for(int i = 0; i < fila->tam; i++){
         if(fila->fila[atual] != NULL){
