@@ -189,7 +189,7 @@ void verificaProcessosValidos(Escalonador *e){
             pthread_mutex_lock(&e->scheduler_mutex);
 
             if(getTempoChegada(p) <= e->tempo_atual){
-            
+
                 inseriu = adicionaProcessoFila(e->fila_prontos, p);
                 e->total_prontos += inseriu;
             }
@@ -392,9 +392,11 @@ void RR_mono(Escalonador *e){
         pthread_mutex_unlock(&e->scheduler_mutex);
         
         e->tempo_atual += e->quantum;
-
+        
         e->current_process = p;
         int falta = getRemainingTime(p) - e->quantum;
+        if(falta < 0) falta = 0;
+        printf("1-Get remaining time: %d e falta: %d\n", getRemainingTime(p), falta);
 
         pthread_mutex_t *mutex = getMutex(p);
         pthread_cond_t *cond = getCondicional(p);
@@ -404,9 +406,10 @@ void RR_mono(Escalonador *e){
         printf("Processo %d running, Remaining time: %d\n", getPid(p), getRemainingTime(p));
         pthread_cond_broadcast(cond);
 
-        while(getRemainingTime(p) > falta){
+        while(getRemainingTime(p) > falta && getState(p) != FINISHED){
             pthread_cond_wait(cond, mutex);
         }
+        printf("2-Get remaining time: %d e falta: %d\n", getRemainingTime(p), falta);
             
         pthread_mutex_unlock(mutex);
 
@@ -438,19 +441,21 @@ void RR_multi(Escalonador *e){
         if(e->qtd_processos > 1){
             pthread_mutex_lock(&e->multi_mutex);
         }
-        
-        PCB *p = retiraProcesso(e->fila_prontos);
+
+        int primeiro = 0;
+        PCB *p = getPrimeiro(e->fila_prontos);
 
         if(p == NULL){
 
             while(1){
                     
-                p = retiraProcesso(e->fila_prontos);
+                p = getPrimeiro(e->fila_prontos);
                 if(p != NULL) break;
                 pthread_cond_wait(&e->scheduler_cv, &e->scheduler_mutex);
             }
         }
 
+        printf("Pegando processo %d\n", getPid(p));
         e->current_process = p;
         executaPcbBuffer(e);
         e->tempo_atual += e->quantum;
@@ -474,11 +479,13 @@ void RR_multi(Escalonador *e){
         pthread_cond_t *cond = getCondicional(p);
 
         pthread_mutex_lock(mutex);
+
         int falta = getRemainingTime(p) - e->quantum;
+        if(falta < 0) falta = 0;
 
         setState(p, RUNNING);
-        printf("Processo %d running, Remaining time: %d\n", getPid(p), getRemainingTime(p));
         setThreadsRestantes(p);
+        printf("Processo %d running, Remaining time: %d\n", getPid(p), getRemainingTime(p));
 
         pthread_cond_broadcast(cond);
 
@@ -488,24 +495,39 @@ void RR_multi(Escalonador *e){
 
         e->current_process = p;
 
+        if(pthread_self() == e->thread_id[0]){
+            printf("Processador 0 acabou de executar o processo %d\n", getPid(p));
+        }
+
+        else if(pthread_self() == e->thread_id[1]){
+            printf("Processador 1 acabou de executar o processo %d\n", getPid(p));
+        }
+
         if(getRemainingTime(p) <= 0){
             printf("Processo %d acabou\n", getPid(p));
-            //Impressão de término do processo
 
             pthread_mutex_lock(&e->multi_mutex);
-                
-            printf("Processo %d acabou!\n", getPid(p));
-            
+                            
             finalizaPcbBuffer(e);
 
             pthread_mutex_unlock(&e->multi_mutex);
-
-            ///acaba
         }
-
+        
         if(getRemainingTime(p) > 0){
+
             pthread_mutex_lock(&e->scheduler_mutex);
+
+            retiraProcesso(e->fila_prontos);
             adicionaProcessoFila(e->fila_prontos, p);
+            printf("Processo %d saiu e voltou p fila...\n", getPid(p));
+
+            pthread_mutex_unlock(&e->scheduler_mutex);
+        }
+        else{
+
+            printf("Processo %d acabou, retirando da fila\n", getPid(p));
+            pthread_mutex_lock(&e->scheduler_mutex);
+            retiraProcesso(e->fila_prontos);
             pthread_mutex_unlock(&e->scheduler_mutex);
         }
 
@@ -547,6 +569,7 @@ void PP_mono(Escalonador *e){
 
         e->current_process = p;
         int falta = getRemainingTime(p) - e->quantum;
+        if(falta < 0) falta = 0;
 
         pthread_mutex_t *mutex = getMutex(p);
         pthread_cond_t *cond = getCondicional(p);
@@ -558,7 +581,10 @@ void PP_mono(Escalonador *e){
 
         while(getRemainingTime(p) > falta){
             pthread_cond_wait(cond, mutex);
+            printf("remaining time: %d e falta: %d\n", getRemainingTime(p), falta);
         }
+
+        printf("saiu do tcb\n");
             
         pthread_mutex_unlock(mutex);
 
@@ -584,12 +610,16 @@ void PP_mono(Escalonador *e){
 
 void PP_multi(Escalonador *e){
 
+    printf("\nEntrou no PP multi\n");
+
     PCB *antigo, *atual;
     antigo = atual = NULL;
     
     while(filaVazia(e->fila_prontos) == 0 || e->generator_done == FALSE){
 
         if(e->generator_done == FALSE) verificaProcessosValidos(e);
+        
+        printf("Tempo atual: %d\n", e->tempo_atual);
                     
         pthread_mutex_lock(&e->scheduler_mutex);
 
@@ -633,18 +663,23 @@ void PP_multi(Escalonador *e){
         pthread_cond_t *cond = getCondicional(p);
 
         pthread_mutex_lock(mutex);
+
+        pthread_mutex_lock(&e->multi_mutex);
         int falta = getRemainingTime(p) - e->quantum;
+        if(falta < 0) falta = 0;
 
         setState(p, RUNNING);
         setThreadsRestantes(p);
         e->tempo_atual += e->quantum;
+        pthread_mutex_unlock(&e->multi_mutex);
+
+        printf("tempo atual incrementado: %d\n", e->tempo_atual);
         //printf("Processo %d running, Remaining time: %d\n", getPid(p), getRemainingTime(p));
         pthread_cond_broadcast(cond);
 
         while(getRemainingTime(p) > falta){
             pthread_cond_wait(cond, mutex);
         }
-
         //printf("Processo %d faltando %d\n", getPid(p), getRemainingTime(p));
 
         if(antigo != atual){

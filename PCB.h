@@ -19,9 +19,21 @@ ProcessState getState(PCB *processo);
 
 void setState(PCB *processo, ProcessState novoEstado);
 
+void resetThreadsQuantum(PCB *processo);
+
+void setThreadsQuantum(PCB *processo);
+
+int getThreadsQuantum(PCB *processo);
+
 int getPid(PCB *processo);
 
 int getDuracao(PCB *processo);
+
+void incrementaProcessadores(PCB *processo);
+
+void decrementaProcessadores(PCB *processo);
+
+int getProcessadoresExecutando(PCB *processo);
 
 int getQuantumProcesso(PCB *processo);
 

@@ -14,7 +14,9 @@ typedef struct tPCB {
     int tipo_escalonamento;
     int tipo_processador;
     int threads_restantes;
+    int processadores_executando;
     int finalizado;
+    int threads_por_quantum;
     ProcessState state; 
     pthread_mutex_t mutex; 
     pthread_cond_t cv; 
@@ -44,6 +46,8 @@ PCB* criaProcesso(int duracao, int prioridade, int n_threads, int tempo_chegada,
     processo->tipo_processador = tipo_processador;
     processo->threads_restantes = n_threads;
     processo->finalizado = 0;
+    processo->processadores_executando = 0;
+    processo->threads_por_quantum = 0;
 
     pthread_mutex_init(&processo->mutex, NULL);
     pthread_cond_init(&processo->cv, NULL);
@@ -59,6 +63,18 @@ PCB* criaProcesso(int duracao, int prioridade, int n_threads, int tempo_chegada,
 
 ProcessState getState(PCB *processo){
     return processo->state;
+}
+
+void resetThreadsQuantum(PCB *processo){
+    processo->threads_por_quantum = 0;
+}
+
+void setThreadsQuantum(PCB *processo){
+    processo->threads_por_quantum++;
+}
+
+int getThreadsQuantum(PCB *processo){
+    return processo->threads_por_quantum;
 }
 
 void setThreadsRestantes(PCB *processo){
@@ -79,6 +95,18 @@ int getRemainingTime(PCB *processo){
 
 int getThreadsRestantes(PCB *processo){
     return processo->threads_restantes;
+}
+
+void incrementaProcessadores(PCB *processo){
+    processo->processadores_executando++;
+}
+
+void decrementaProcessadores(PCB *processo){
+    processo->processadores_executando--;
+}
+
+int getProcessadoresExecutando(PCB *processo){
+    return processo->processadores_executando;
 }
 
 int getQuantumProcesso(PCB *processo){

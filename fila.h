@@ -10,6 +10,8 @@ Fila *criaFila(int num_processos);
 
 int adicionaProcessoFila(Fila *fila, PCB *p);
 
+int adicionaOrdenadoFila(Fila *fila, PCB *p);
+
 PCB *retiraProcesso(Fila *fila);
 
 int filaVazia(Fila *fila);
@@ -19,6 +21,8 @@ int verificaSeExiste(Fila *fila, PCB *p);
 PCB** getVetor(Fila *fila);
 
 PCB* getProcessoMaiorPrioridade(Fila *fila);
+
+PCB* getMaiorPrioridadeMulti(Fila *fila);
 
 int getTam(Fila *fila);
 

@@ -1,10 +1,22 @@
-[RR] Executando processo PID 1 com quantum 500ms // processador 0
-[RR] Executando processo PID 3 com quantum 500ms // processador 1
-[RR] Processo PID 1 finalizado
-[RR] Executando processo PID 2 com quantum 500ms // processador 0
-[RR] Executando processo PID 3 com quantum 500ms // processador 1
-[RR] Executando processo PID 2 com quantum 500ms // processador 0
-[RR] Processo PID 3 finalizado
-[RR] Executando processo PID 2 com quantum 500ms // processador 0
-[RR] Processo PID 2 finalizado
+[PRIORITY] Executando processo PID 2 prioridade 2 // processador 0
+[PRIORITY] Executando processo PID 1 prioridade 3 // processador 1
+[PRIORITY] Executando processo PID 1 prioridade 3 // processador 0
+[PRIORITY] Executando processo PID 5 prioridade 1 // processador 0
+[PRIORITY] Executando processo PID 5 prioridade 1 // processador 1
+[PRIORITY] Executando processo PID 2 prioridade 2 // processador 1
+[PRIORITY] Executando processo PID 2 prioridade 2 // processador 0
+[PRIORITY] Executando processo PID 5 prioridade 1 // processador 0
+[PRIORITY] Executando processo PID 5 prioridade 1 // processador 1
+[PRIORITY] Processo PID 2 finalizado
+[PRIORITY] Executando processo PID 1 prioridade 3 // processador 1
+[PRIORITY] Processo PID 5 finalizado
+[PRIORITY] Executando processo PID 3 prioridade 4 // processador 0
+[PRIORITY] Executando processo PID 1 prioridade 3 // processador 1
+[PRIORITY] Executando processo PID 1 prioridade 3 // processador 0
+[PRIORITY] Executando processo PID 3 prioridade 4 // processador 0
+[PRIORITY] Processo PID 1 finalizado
+[PRIORITY] Executando processo PID 4 prioridade 5 // processador 1
+[PRIORITY] Executando processo PID 4 prioridade 5 // processador 1
+[PRIORITY] Processo PID 4 finalizado
+[PRIORITY] Processo PID 3 finalizado
 Escalonador terminou execução de todos processos

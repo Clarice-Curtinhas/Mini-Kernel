@@ -30,13 +30,44 @@ int getTam(Fila *fila){
 
 int adicionaProcessoFila(Fila *fila, PCB *p){
 
-    //printf("Processo %d entrou na fila\n", getPid(p));
+    printf("Processo %d entrou na fila...\n", getPid(p));
 
     if(verificaSeExiste(fila, p) == 1) return 0;
     
     if(fila->tam == fila->cap) return 0;
 
     fila->fila[fila->final] = p;
+    fila->final++;
+    fila->final = fila->final % fila->cap;
+    fila->tam++;
+
+    return 1;
+}
+
+int adicionaOrdenadoFila(Fila *fila, PCB *p){
+
+    if(verificaSeExiste(fila, p) == 1) return 0;
+    
+    if(fila->tam == fila->cap) return 0;
+
+    int atual = fila->final;
+    int ant = (atual -1 + fila->cap) % fila->cap;
+
+    for(int i = 0; i < fila->tam; i++){
+        PCB *aux = fila->fila[ant];
+
+        if(getTempoChegada(aux) > getTempoChegada(p)){
+            fila->fila[atual] = aux;
+            atual = ant;
+            ant = (ant - 1 + fila->cap) % fila->cap;
+        }
+
+        else{
+            break;
+        }
+    }
+
+    fila->fila[atual] = p;
     fila->final++;
     fila->final = fila->final % fila->cap;
     fila->tam++;
@@ -80,12 +111,15 @@ PCB *retiraProcesso(Fila *fila){
     fila->inicial = fila->inicial % fila->cap;
     fila->tam--;
 
+    printf("Processo %d saiu da fila...\n", getPid(p));
+
     //printf("Retirou algo...%d\n", fila->tam);
 
     return p;
 }
 
 PCB* getPrimeiro(Fila *fila){
+
     PCB* prim = fila->fila[fila->inicial];
 
     if((getState(prim) == RUNNING && getNumThreads(prim) == 1) || (getState(prim) == FINISHED) || getRemainingTime(prim) <= 0){
@@ -128,6 +162,13 @@ PCB* getProcessoMaiorPrioridade(Fila *fila){
                 maior = fila->fila[atual];
                 ind_maior = atual;
             }
+
+            if(getPrioridade(fila->fila[atual]) == getPrioridade(maior)){
+                if(getTempoChegada(fila->fila[atual]) < getTempoChegada(maior)){
+                    maior = fila->fila[atual];
+                    ind_maior = atual;
+                }
+            }
         }
 
         //printf("pid: %d - prioridade: %d\n", getPid(fila->fila[i]), getPrioridade(fila->fila[i]));
@@ -145,6 +186,44 @@ PCB* getProcessoMaiorPrioridade(Fila *fila){
 
     fila->fila[fila->final] = NULL;
     fila->tam--;
+
+    return maior;
+}
+
+PCB* getMaiorPrioridadeMulti(Fila *fila){
+
+    if(fila->tam == 0){
+        return NULL;
+    }
+
+    if(fila->tam == 1){
+        return fila->fila[fila->inicial];
+    }
+
+    PCB *maior = NULL;
+
+    int atual, ind_maior;
+
+    atual = ind_maior = fila->inicial % fila->cap;
+    maior = fila->fila[atual];
+
+    for(int i = 0; i < fila->tam; i++){
+        if(fila->fila[atual] != NULL){
+            if(getPrioridade(fila->fila[atual]) < getPrioridade(maior)){
+                maior = fila->fila[atual];
+                ind_maior = atual;
+            }
+
+            if(getPrioridade(fila->fila[atual]) == getPrioridade(maior)){
+                if(getTempoChegada(fila->fila[atual]) < getTempoChegada(maior)){
+                    maior = fila->fila[atual];
+                    ind_maior = atual;
+                }
+            }
+        }
+
+        atual = (atual+1) % fila->cap;
+    }
 
     return maior;
 }
