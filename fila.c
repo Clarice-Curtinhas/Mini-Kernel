@@ -111,7 +111,7 @@ PCB *retiraProcesso(Fila *fila){
     fila->inicial = fila->inicial % fila->cap;
     fila->tam--;
 
-    printf("Processo %d saiu da fila...\n", getPid(p));
+    //printf("Processo %d saiu da fila...\n", getPid(p));
 
     //printf("Retirou algo...%d\n", fila->tam);
 

@@ -277,7 +277,7 @@ void FCFS_multi(Escalonador *e){
 
         if(e->generator_done == FALSE) verificaProcessosValidos(e);
 
-        printf("Quantidade de processos prontos: %d\n", getTam(e->fila_prontos));
+        //printf("Quantidade de processos prontos: %d\n", getTam(e->fila_prontos));
         
         if(e->current_process_multi[id] == NULL || getState(e->current_process_multi[id]) == FINISHED){
             
@@ -517,7 +517,7 @@ void RR_multi(Escalonador *e){
 
             pthread_mutex_lock(&e->scheduler_mutex);
 
-            retiraProcesso(e->fila_prontos);
+            RetiraProcessoEspecifico(e->fila_prontos, p);
             adicionaProcessoFila(e->fila_prontos, p);
             printf("Processo %d saiu e voltou p fila...\n", getPid(p));
 
@@ -525,9 +525,9 @@ void RR_multi(Escalonador *e){
         }
         else{
 
-            printf("Processo %d acabou, retirando da fila\n", getPid(p));
+            //printf("Processo %d acabou, retirando da fila\n", getPid(p));
             pthread_mutex_lock(&e->scheduler_mutex);
-            retiraProcesso(e->fila_prontos);
+            RetiraProcessoEspecifico(e->fila_prontos, p);
             pthread_mutex_unlock(&e->scheduler_mutex);
         }
 
@@ -684,6 +684,7 @@ void PP_multi(Escalonador *e){
 
         pthread_mutex_lock(&e->multi_mutex);
         e->tempo_atual += e->quantum;
+        //e->rodando++;
         printf("tempo atual incrementado: %d\n", e->tempo_atual);
 
         
@@ -702,13 +703,19 @@ void PP_multi(Escalonador *e){
 
             pthread_mutex_lock(&e->multi_mutex);
             e->current_process = atual;
+            pthread_mutex_lock(&e->scheduler_mutex);
             RetiraProcessoEspecifico(e->fila_prontos, atual);
+            pthread_mutex_unlock(&e->scheduler_mutex);
             finalizaPcbBuffer(e);
 
             pthread_mutex_unlock(&e->multi_mutex);
 
             ///acaba
         }
+
+        /*if(e->rodando == e->qtd_processos){
+            break;
+        }*/
     }
 }
 

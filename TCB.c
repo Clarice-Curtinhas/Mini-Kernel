@@ -29,7 +29,7 @@ void *thr_func(void *arg){
             pthread_cond_wait(cond, mutex);
         }
 
-        printf("Qnt threads %d criada, total: %d\n", getThreadsQuantum(p), qnt_threads);
+        //printf("Qnt threads %d criada, total: %d\n", getThreadsQuantum(p), qnt_threads);
 
         int tipo_escalonador = getTipoEscalonamento(p);
 
@@ -59,7 +59,6 @@ void *thr_func(void *arg){
 
         else{
             if(tipo_escalonador == 1){
-                printf("[TCB] Processo %d executando, Remaining time %d\n", getPid(p), getRemainingTime(p));
                 usleep(500 * 1000);
                 //setState(p, READY);
                 diminuiRemainingTime(p, 500);
@@ -67,17 +66,16 @@ void *thr_func(void *arg){
             }
 
             else if(tipo_escalonador == 2 || tipo_escalonador == 3){
-                printf("[TCB] Processo %d Remaining time %d\n", getPid(p), getRemainingTime(p));
                 usleep(500 * 1000);
-                //setState(p, READY);
+                setState(p, READY);
                 diminuiRemainingTime(p, 500);
-                printf("[TCB] Processo %d Remaining time %d\n", getPid(p), getRemainingTime(p));
+                //printf("[TCB] Processo %d Remaining time %d\n", getPid(p), getRemainingTime(p));
             }
         }
     }
 
     pthread_mutex_unlock(mutex);
-    printf("Terminou thread processo %d\n", getPid(p));
+    //printf("Terminou thread processo %d\n", getPid(p));
     
     return NULL;
 }

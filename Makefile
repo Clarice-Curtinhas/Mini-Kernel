@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -Wall -Wextra -g
 
-ARQUIVO_TAR = mini_kernel.tar.gz
+ARQUIVO_TAR = 2024102896_2024102900.tar.gz
 
 MONO = main_mono.c escalonador.c PCB.c TCB.c fila.c
 
