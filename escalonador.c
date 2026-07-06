@@ -451,7 +451,6 @@ void RR_multi(Escalonador *e){
             }
         }
 
-        e->current_process_multi[id] = p;
         e->current_process = p;
         executaPcbBuffer(e);
         e->tempo_atual += e->quantum;
@@ -488,7 +487,6 @@ void RR_multi(Escalonador *e){
         }
 
         e->current_process = p;
-        e->current_process_multi[id] = NULL;
 
         if(getRemainingTime(p) <= 0){
             printf("Processo %d acabou\n", getPid(p));
