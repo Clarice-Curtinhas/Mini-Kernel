@@ -1,3 +1,10 @@
+/*
+ * main_mono.c
+ *
+ *  Created on: 04/06/2026
+ *      Author: Clarice e Maria Julia
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

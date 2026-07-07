@@ -1,3 +1,9 @@
+/*
+ * main_multi.c
+ *
+ *  Created on: 04/06/2026
+ *      Author: Clarice e Maria Julia
+ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -51,17 +57,18 @@ int main(int argc, char *argv[]){
     pthread_create(&thread_esc1, NULL, executaEscalonamento, escalonador);
     pthread_create(&thread_esc2, NULL, executaEscalonamento, escalonador);
     pthread_join(thread_esc1, NULL);
+    //printf("#### Thread 0 terminou ####\n");
     pthread_join(thread_esc2, NULL);
+    //printf("#### Thread 1 terminou ####\n");
 
     terminaExecucaoBuffer(escalonador);
 
     FILE *saida = fopen("log_execucao_minikernel.txt", "w");
 
     imprimeBuffer(escalonador, saida);
+    fclose(saida);
 
     liberaEscalonador(escalonador);
-
-    fclose(saida);
 
     return 0;
 }

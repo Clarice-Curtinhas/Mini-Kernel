@@ -1,3 +1,9 @@
+/*
+ * TCB.c
+ *
+ *  Created on: 04/06/2026
+ *      Author: Clarice e Maria Julia
+ */
 #include <unistd.h>
 #include "TCB.h"
 
@@ -25,8 +31,9 @@ void *thr_func(void *arg){
         
         while(getState(p) != RUNNING){
 
-            if(getState(p) == FINISHED) break;
             pthread_cond_wait(cond, mutex);
+            if(getState(p) == FINISHED) break;
+            //printf("Processo %d acordou\n", getPid(p));
         }
 
         //printf("Qnt threads %d criada, total: %d\n", getThreadsQuantum(p), qnt_threads);
@@ -36,17 +43,17 @@ void *thr_func(void *arg){
         if(tipo_processador == 0){
 
             if((tipo_escalonador == 2  || tipo_escalonador == 3) && (tempo >= 500 || qnt_threads > getThreadsQuantum(p))){
-                printf("[TCB] Processo %d Remaining time %d\n", getPid(p), getRemainingTime(p));
+                //printf("[TCB] Processo %d Remaining time %d\n", getPid(p), getRemainingTime(p));
                 usleep(500 * 1000);
                 setState(p, READY);
                 setThreadsQuantum(p);
                 diminuiRemainingTime(p, 500);
-                printf("[TCB] Processo %d Remaining time %d\n", getPid(p), getRemainingTime(p));
+                //printf("[TCB] Processo %d Remaining time %d\n", getPid(p), getRemainingTime(p));
             }
 
             else{
                 usleep(tempo * 1000);
-                printf("TCB vai diminuir %d do processo %d\n", tempo, getPid(p));
+                //printf("TCB vai diminuir %d do processo %d\n", tempo, getPid(p));
                 setThreadsQuantum(p);
                 diminuiRemainingTime(p, tempo);
 
@@ -62,13 +69,14 @@ void *thr_func(void *arg){
                 usleep(500 * 1000);
                 //setState(p, READY);
                 diminuiRemainingTime(p, 500);
-                printf("[TCB] Processo %d executando, Remaining time %d\n", getPid(p), getRemainingTime(p));
+                //printf("[TCB] Processo %d executando, Remaining time %d\n", getPid(p), getRemainingTime(p));
             }
 
             else if(tipo_escalonador == 2 || tipo_escalonador == 3){
                 usleep(500 * 1000);
                 setState(p, READY);
                 diminuiRemainingTime(p, 500);
+                if(getState(p) == FINISHED) break;
                 //printf("[TCB] Processo %d Remaining time %d\n", getPid(p), getRemainingTime(p));
             }
         }

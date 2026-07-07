@@ -1,3 +1,10 @@
+/*
+ * PCB.c
+ *
+ *  Created on: 04/06/2026
+ *      Author: Clarice e Maria Julia
+ */
+
 #include "PCB.h"
 
 #define FCFS 1

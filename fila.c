@@ -1,3 +1,10 @@
+/*
+ * fila.c
+ *
+ *  Created on: 04/06/2026
+ *      Author: Clarice e Maria Julia
+ */
+
 #include "fila.h"
 
 typedef struct tFila {
@@ -30,7 +37,7 @@ int getTam(Fila *fila){
 
 int adicionaProcessoFila(Fila *fila, PCB *p){
 
-    printf("Processo %d entrou na fila...\n", getPid(p));
+    //printf("Processo %d entrou na fila...\n", getPid(p));
 
     if(verificaSeExiste(fila, p) == 1) return 0;
     
@@ -118,16 +125,29 @@ PCB *retiraProcesso(Fila *fila){
     return p;
 }
 
+PCB* getPrimeiroRR(Fila *fila){
+
+    if(fila->tam == 0){
+        return NULL;
+    }
+
+    return fila->fila[fila->inicial];
+}
+
 PCB* getPrimeiro(Fila *fila){
 
     PCB* prim = fila->fila[fila->inicial];
 
-    if(fila->tam == 1){
+    if(fila->tam == 0){
+        return NULL;
+    }
+
+    if(fila->tam == 1 /*&& getThreadsRestantes(prim) > 1*/){
         return fila->fila[fila->inicial];
     }
 
-    else if((getState(prim) == RUNNING && getNumThreads(prim) == 1) || (getState(prim) == FINISHED) || getRemainingTime(prim) <= 0){
-        return fila->fila[fila->inicial+1];
+    if((getState(prim) == RUNNING && getNumThreads(prim) == 1) || (getState(prim) == FINISHED) || getRemainingTime(prim) <= 0 || getThreadsRestantes(prim) == 0){
+        return fila->fila[(fila->inicial+1) % fila->cap];
     }
 
     return fila->fila[fila->inicial];
@@ -203,7 +223,7 @@ PCB* getMaiorPrioridadeMulti(Fila *fila){
     PCB *maior = NULL;
     PCB *seg_maior = NULL;
 
-    int atual, ind_maior, ind_seg_maior;
+    int atual;
 
     atual = fila->inicial % fila->cap;
 
@@ -212,31 +232,24 @@ PCB* getMaiorPrioridadeMulti(Fila *fila){
         if(fila->fila[atual] != NULL){
             if(maior == NULL || getPrioridade(fila->fila[atual]) < getPrioridade(maior)){
                 seg_maior = maior;
-                ind_seg_maior = ind_maior;
 
                 maior = fila->fila[atual];
-                ind_maior = atual;
             }
 
             else if(getPrioridade(fila->fila[atual]) == getPrioridade(maior)){
                 if(getTempoChegada(fila->fila[atual]) < getTempoChegada(maior)){
                     seg_maior = maior;
-                    ind_seg_maior = ind_maior;
-
                     maior = fila->fila[atual];
-                    ind_maior = atual;
                 }
             }
 
             else if(seg_maior == NULL || getPrioridade(fila->fila[atual]) < getPrioridade(seg_maior)){
                 seg_maior = fila->fila[atual];
-                ind_seg_maior = atual;
             }
 
             else if(getPrioridade(fila->fila[atual]) == getPrioridade(seg_maior)){
                 if(getTempoChegada(fila->fila[atual]) < getTempoChegada(seg_maior)){
                     seg_maior = fila->fila[atual];
-                    ind_seg_maior = atual;
                 }
             }
         }
@@ -261,7 +274,10 @@ void RetiraProcessoEspecifico(Fila *fila, PCB *p){
     if(p == NULL) return;
 
     if(fila->tam == 1){
+        if(fila->fila[fila->inicial] != p) return;
+
         fila->fila[fila->inicial] = NULL;
+        fila->inicial = fila->final = 0;
         fila->tam--;
         return;
     }
@@ -277,6 +293,8 @@ void RetiraProcessoEspecifico(Fila *fila, PCB *p){
         atual = (atual+1) % fila->cap;
     }
 
+    //printf("\n1-  Quantidade de processos na fila: %d\n", fila->tam);
+
     if(encontrou == 0) return;
 
 
@@ -290,12 +308,19 @@ void RetiraProcessoEspecifico(Fila *fila, PCB *p){
 
     fila->fila[fila->final] = NULL;
     fila->tam--;
+
+    if(fila->tam == 0){
+        fila->inicial = fila->final = 0;
+    }
+
+    //printf("\n2-  Quantidade de processos na fila: %d\n", fila->tam);
 }
 
 void desalocaFilaProcessos(Fila *fila){
-
-    for(int i = 0; i < fila->cap; i++){
-        desalocaProcesso(fila->fila[i]);
+    if(fila->tam > 0){
+        for(int i = 0; i < fila->cap; i++){
+            desalocaProcesso(fila->fila[i]);
+        }
     }
 
     free(fila->fila);

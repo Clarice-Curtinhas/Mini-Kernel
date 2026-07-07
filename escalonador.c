@@ -1,3 +1,9 @@
+/*
+ * escalonador.c
+ *
+ *  Created on: 04/06/2026
+ *      Author: Clarice e Maria Julia
+ */
 #include "escalonador.h"
 
 #define FCFS 1
@@ -23,6 +29,7 @@ typedef struct tEscalonador {
     int total_prontos;
     Fila *pcb_list; //Lista de todos os processos do sistema
     Fila *fila_prontos; //Fila de prontos circular 
+    Fila *executando;
     int generator_done; //Sinaliza que todos os processos foram criados e enfileirados 
     PCB *current_process; //Processo atualmente em execução 
     PCB *current_process_multi[QTD_PROCESSADORES];
@@ -73,6 +80,7 @@ Escalonador* criaEscalonador(int qtd_processos, int tipo_processador){
         e->current_process = NULL;
     }
     else{
+        e->executando = criaFila(qtd_processos);
         pthread_mutex_init(&e->multi_mutex, NULL);
         pthread_mutex_init(&e->buffer_mutex, NULL);
 
@@ -189,15 +197,17 @@ void verificaProcessosValidos(Escalonador *e){
             pthread_mutex_lock(&e->scheduler_mutex);
 
             if(getTempoChegada(p) <= e->tempo_atual){
-
-                inseriu = adicionaProcessoFila(e->fila_prontos, p);
-                e->total_prontos += inseriu;
+                if(verificaSeExiste(e->fila_prontos, p) != 1){
+                    int buff = adicionaProcessoFila(e->fila_prontos, p);
+                    e->total_prontos += 1;
+                    inseriu = 1;
+                }
             }
 
             pthread_mutex_unlock(&e->scheduler_mutex);
         }
 
-        printf("Total de processos prontos: %d e qntProcessos: %d\n", e->total_prontos, e->qtd_processos);
+        //printf("Total de processos prontos: %d e qntProcessos: %d\n", e->total_prontos, e->qtd_processos);
 
         if(e->total_prontos == e->qtd_processos){
             e->generator_done = TRUE;
@@ -304,18 +314,18 @@ void FCFS_multi(Escalonador *e){
             e->current_process = p;
 
             executaPcbBuffer(e);
-            printf("Executando processo %d\n", getPid(p));
+            //printf("Executando processo %d\n", getPid(p));
             
             if(e->qtd_processos > 1){
                 pthread_mutex_unlock(&e->multi_mutex);
             }
 
-            if(pthread_self() == e->thread_id[0]){
+            /*if(pthread_self() == e->thread_id[0]){
                 printf("\n    Processador 0 pegou o processo %d\n", getPid(p));
             }
             else if(pthread_self() == e->thread_id[1]){
                 printf("\n    Processador 1 pegou o processo %d\n", getPid(p));
-            }
+            }*/
 
             pthread_mutex_unlock(&e->scheduler_mutex);
             setTipoEscalonamento(p, 1);
@@ -338,14 +348,14 @@ void FCFS_multi(Escalonador *e){
 
             if(getThreadsRestantes(p) == 0 && getRemainingTime(p) <= 0){
 
-                printf("Processo %d acabou!\n", getPid(p));
+                //printf("Processo %d acabou!\n", getPid(p));
 
                 pthread_mutex_lock(&e->scheduler_mutex);
 
                 //Impressão de término do processo
 
                 pthread_mutex_lock(&e->multi_mutex);
-                printf("Processo %d saiu do lock!\n", getPid(p));
+                //printf("Processo %d saiu do lock!\n", getPid(p));
 
                 e->current_process = p;
                 finalizaPcbBuffer(e);
@@ -358,7 +368,7 @@ void FCFS_multi(Escalonador *e){
                 e->current_process_multi[id] = NULL;
 
                 pthread_mutex_unlock(&e->scheduler_mutex);
-                printf("Processo %d acabou!\n", getPid(p));
+                //printf("Processo %d acabou!\n", getPid(p));
             }
             
             pthread_mutex_unlock(mutex);
@@ -385,7 +395,7 @@ void RR_mono(Escalonador *e){
             }
         }
 
-        printf("Processo %d retirado\n", getPid(p));
+        //printf("Processo %d retirado\n", getPid(p));
 
         setTipoEscalonamento(p, 2);
 
@@ -396,20 +406,20 @@ void RR_mono(Escalonador *e){
         e->current_process = p;
         int falta = getRemainingTime(p) - e->quantum;
         if(falta < 0) falta = 0;
-        printf("1-Get remaining time: %d e falta: %d\n", getRemainingTime(p), falta);
+        //printf("1-Get remaining time: %d e falta: %d\n", getRemainingTime(p), falta);
 
         pthread_mutex_t *mutex = getMutex(p);
         pthread_cond_t *cond = getCondicional(p);
 
         pthread_mutex_lock(mutex);
         setState(p, RUNNING);
-        printf("Processo %d running, Remaining time: %d\n", getPid(p), getRemainingTime(p));
+        //printf("Processo %d running, Remaining time: %d\n", getPid(p), getRemainingTime(p));
         pthread_cond_broadcast(cond);
 
         while(getRemainingTime(p) > falta && getState(p) != FINISHED){
             pthread_cond_wait(cond, mutex);
         }
-        printf("2-Get remaining time: %d e falta: %d\n", getRemainingTime(p), falta);
+        //printf("2-Get remaining time: %d e falta: %d\n", getRemainingTime(p), falta);
             
         pthread_mutex_unlock(mutex);
 
@@ -420,7 +430,7 @@ void RR_mono(Escalonador *e){
         executaPcbBuffer(e);
 
         if(getRemainingTime(p) <= 0){
-            printf("Processo %d acabou\n", getPid(p));
+            //printf("Processo %d acabou\n", getPid(p));
             finalizaPcbBuffer(e);
         }
     }
@@ -442,7 +452,18 @@ void RR_multi(Escalonador *e){
             pthread_mutex_lock(&e->multi_mutex);
         }
 
-        int primeiro = 0;
+        /*if(getTam(e->fila_prontos) == 1 && getRemainingTime(getPrimeiro(e->fila_prontos)) <= 500){
+            pthread_mutex_unlock(&e->scheduler_mutex);
+            if(e->qtd_processos > 1){
+                pthread_mutex_unlock(&e->multi_mutex);
+            }
+
+            pthread_cond_t *cond = getCondicional(getPrimeiro(e->fila_prontos));
+            pthread_cond_broadcast(cond);
+
+            break;
+        }*/
+
         PCB *p = getPrimeiro(e->fila_prontos);
 
         if(p == NULL){
@@ -455,7 +476,7 @@ void RR_multi(Escalonador *e){
             }
         }
 
-        printf("Pegando processo %d\n", getPid(p));
+        //printf("Pegando processo %d\n", getPid(p));
         e->current_process = p;
         executaPcbBuffer(e);
         e->tempo_atual += e->quantum;
@@ -464,13 +485,13 @@ void RR_multi(Escalonador *e){
             pthread_mutex_unlock(&e->multi_mutex);
         }
         
-        if(pthread_self() == e->thread_id[0]){
+        /*if(pthread_self() == e->thread_id[0]){
             printf("Processador 0 pegou o processo %d\n", getPid(p));
         }
 
         else if(pthread_self() == e->thread_id[1]){
             printf("Processador 1 pegou o processo %d\n", getPid(p));
-        }
+        }*/
         setTipoEscalonamento(p, 2);
 
         pthread_mutex_unlock(&e->scheduler_mutex);
@@ -485,7 +506,7 @@ void RR_multi(Escalonador *e){
 
         setState(p, RUNNING);
         setThreadsRestantes(p);
-        printf("Processo %d running, Remaining time: %d\n", getPid(p), getRemainingTime(p));
+        //printf("Processo %d running, Remaining time: %d\n", getPid(p), getRemainingTime(p));
 
         pthread_cond_broadcast(cond);
 
@@ -495,16 +516,16 @@ void RR_multi(Escalonador *e){
 
         e->current_process = p;
 
-        if(pthread_self() == e->thread_id[0]){
+        /*if(pthread_self() == e->thread_id[0]){
             printf("Processador 0 acabou de executar o processo %d\n", getPid(p));
         }
 
         else if(pthread_self() == e->thread_id[1]){
             printf("Processador 1 acabou de executar o processo %d\n", getPid(p));
-        }
+        }*/
 
         if(getRemainingTime(p) <= 0){
-            printf("Processo %d acabou\n", getPid(p));
+            //printf("Processo %d acabou\n", getPid(p));
 
             pthread_mutex_lock(&e->multi_mutex);
                             
@@ -519,7 +540,7 @@ void RR_multi(Escalonador *e){
 
             RetiraProcessoEspecifico(e->fila_prontos, p);
             adicionaProcessoFila(e->fila_prontos, p);
-            printf("Processo %d saiu e voltou p fila...\n", getPid(p));
+            //printf("Processo %d saiu e voltou p fila...\n", getPid(p));
 
             pthread_mutex_unlock(&e->scheduler_mutex);
         }
@@ -541,7 +562,7 @@ void PP_mono(Escalonador *e){
     antigo = atual = NULL;
     
     while(filaVazia(e->fila_prontos) == 0 || e->generator_done == FALSE){
-        printf("Voltou? Fila: %d e generator_done: %d\n", getTam(e->fila_prontos), e->generator_done);
+        //printf("Voltou? Fila: %d e generator_done: %d\n", getTam(e->fila_prontos), e->generator_done);
 
         if(e->generator_done == FALSE) verificaProcessosValidos(e);
                     
@@ -581,10 +602,10 @@ void PP_mono(Escalonador *e){
 
         while(getRemainingTime(p) > falta){
             pthread_cond_wait(cond, mutex);
-            printf("remaining time: %d e falta: %d\n", getRemainingTime(p), falta);
+            //printf("remaining time: %d e falta: %d\n", getRemainingTime(p), falta);
         }
 
-        printf("saiu do tcb\n");
+        //printf("saiu do tcb\n");
             
         pthread_mutex_unlock(mutex);
 
@@ -600,7 +621,7 @@ void PP_mono(Escalonador *e){
         }
 
         if(getRemainingTime(p) <= 0){
-            printf("Processo %d acabou\n", getPid(p));
+            //printf("Processo %d acabou\n", getPid(p));
             finalizaPcbBuffer(e);
         }
     }
@@ -610,16 +631,17 @@ void PP_mono(Escalonador *e){
 
 void PP_multi(Escalonador *e){
 
-    printf("\nEntrou no PP multi\n");
+    //printf("\nEntrou no PP multi\n");
 
-    PCB *antigo, *atual;
-    antigo = atual = NULL;
+    PCB *atual;
+    atual = NULL;
+    
     
     while(filaVazia(e->fila_prontos) == 0 || e->generator_done == FALSE){
 
         if(e->generator_done == FALSE) verificaProcessosValidos(e);
         
-        printf("Tempo atual: %d\n", e->tempo_atual);
+        //printf("Tempo atual: %d\n", e->tempo_atual);
                     
         pthread_mutex_lock(&e->scheduler_mutex);
 
@@ -635,7 +657,6 @@ void PP_multi(Escalonador *e){
             while(1){
                     
                 p = getMaiorPrioridadeMulti(e->fila_prontos);
-                atual = p;
                 if(p != NULL) break;
                 pthread_cond_wait(&e->scheduler_cv, &e->scheduler_mutex);
             }
@@ -649,13 +670,13 @@ void PP_multi(Escalonador *e){
             pthread_mutex_unlock(&e->multi_mutex);
         }
 
-        if(pthread_self() == e->thread_id[0]){
+        /*if(pthread_self() == e->thread_id[0]){
             printf("Processador 0 pegou o processo %d\n", getPid(p));
         }
 
         else if(pthread_self() == e->thread_id[1]){
             printf("Processador 1 pegou o processo %d\n", getPid(p));
-        }
+        }*/
 
         pthread_mutex_unlock(&e->scheduler_mutex);
 
@@ -685,19 +706,18 @@ void PP_multi(Escalonador *e){
         pthread_mutex_lock(&e->multi_mutex);
         e->tempo_atual += e->quantum;
         //e->rodando++;
-        printf("tempo atual incrementado: %d\n", e->tempo_atual);
+        //printf("tempo atual incrementado: %d\n", e->tempo_atual);
 
         
-        if(getRemainingTime(p) > 0){
+        /*if(getRemainingTime(p) > 0){
             pthread_mutex_lock(&e->scheduler_mutex);
-            antigo = p;
             pthread_mutex_unlock(&e->scheduler_mutex);
-        }
+        }*/
 
         pthread_mutex_unlock(&e->multi_mutex);
 
         if(getRemainingTime(p) <= 0 || getState(p) == FINISHED){
-            printf("    Processo %d imprimiu término\n", getPid(p));
+            //printf("    Processo %d imprimiu término\n", getPid(p));
 
             //Impressão de término do processo
 
@@ -719,9 +739,9 @@ void PP_multi(Escalonador *e){
     }
 }
 
-void realocaBuffer(Escalonador *e, int test){
+void realocaBuffer(Escalonador *e, int text){
     
-    if(e->tam_buffer < e->final_buffer+test){
+    if(e->tam_buffer < e->final_buffer+text){
         e->log_buffer = realloc(e->log_buffer, (e->tam_buffer+TAM_BUFFER) * sizeof(char));
         e->tam_buffer += TAM_BUFFER;
     }
@@ -830,6 +850,7 @@ void liberaEscalonador(Escalonador *e){
         pthread_mutex_destroy(&e->multi_mutex);
         pthread_mutex_destroy(&e->buffer_mutex);
         free(e->thread_id);
+        desalocaFilaProcessos(e->executando);
     }
     
     desalocaFilaProcessos(e->pcb_list);

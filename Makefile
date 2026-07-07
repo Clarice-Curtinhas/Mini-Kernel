@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -g
+CFLAGS = -g
 
 ARQUIVO_TAR = 2024102896_2024102900.tar.gz
 
